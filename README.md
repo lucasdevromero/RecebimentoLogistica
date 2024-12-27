@@ -28,13 +28,13 @@ HTML, CSS e JavaScript: Linguagens utilizadas para criar a interface do usuário
 
 ### Estrutura do Código:
 
-doGet(): Função principal que renderiza o formulário HTML.
-getTransportadoras(): Função que obtém a lista de transportadoras de uma planilha.
-salvarDados(): Função que salva os dados do formulário na planilha, realizando as validações necessárias.
-verificarChavePrimaria(): Função que verifica se a chave primária já existe na planilha.
-encontrarLinha(): Função que encontra a linha correspondente a uma chave primária na planilha.
-buscarChavePrimaria(): Função que busca a chave primária correspondente a uma placa.
-formatarDatas(): Função que formata as datas nas colunas especificadas da planilha.
+*doGet(): Função principal que renderiza o formulário HTML.
+*getTransportadoras(): Função que obtém a lista de transportadoras de uma planilha.
+*salvarDados(): Função que salva os dados do formulário na planilha, realizando as validações necessárias.
+*verificarChavePrimaria(): Função que verifica se a chave primária já existe na planilha.
+*encontrarLinha(): Função que encontra a linha correspondente a uma chave primária na planilha.
+*buscarChavePrimaria(): Função que busca a chave primária correspondente a uma placa.
+*formatarDatas(): Função que formata as datas nas colunas especificadas da planilha.
 
 ### Próximos Passos:
 
