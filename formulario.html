@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Recebimento</title>
+      <style>
+        /* Estilos globais */
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #021D49;
+        }
+
+        h2 {
+          text-align: center;
+          padding: 15px;
+          background-color: #021d49;
+          color: white;
+          margin-bottom: 20px;
+        }
+
+        /* Responsividade */
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+          margin-bottom: 15px;
+        }
+
+        .input-group label {
+          font-weight: bold;
+          margin-bottom: 5px;
+          display: block;
+        }
+
+        .input-group input,
+        .input-group select {
+          width: 100%;
+          padding: 12px;
+          font-size: 15px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-sizing: border-box;
+          height: 44px;
+        }
+
+        .input-group input[type="datetime-local"] {
+          padding: 8px;
+          height: 44px;
+        }
+
+        .input-group select {
+          height: 44px;
+        }
+
+        /* Estilos para os botões */
+        button {
+          width: 100%;
+          padding: 12px;
+          background-color: #021d49;
+          color: white;
+          border: none;
+          font-size: 18px;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+
+        button:hover {
+          background-color: #021d49;
+        }
+
+        /* Título de seção */
+        h3 {
+          margin-top: 20px;
+          font-size: 18px;
+          color: #333;
+        }
+
+        /* Estilo para esconder elementos no início */
+        #campos_edicao {
+          display: none;
+        }
+
+        /* Adicionando margem entre os campos */
+        .input-group {
+          margin-bottom: 20px;
+        }
+
+        /* Responsividade para telas pequenas */
+        @media (max-width: 480px) {
+          h2 {
+            font-size: 20px;
+          }
+
+          .container {
+            padding: 15px;
+          }
+
+          button {
+            font-size: 16px;
+          }
+        }
+
+        /* Logo da empresa */
+        .logo {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          width: 150px;
+          z-index: 10;
+        }
+
+        .logo img {
+          width: 100%;
+          height: auto;
+        }
+
+        /* Estilos adicionais para validação e foco */
+        .input-group input:focus {
+          border-color: #021d49;
+          outline: none;
+        }
+
+        /* Estilo de borda para campos válidos e inválidos */
+        .input-group input:invalid {
+          border-color: #e57373;
+        }
+
+        .input-group input:valid {
+          border-color: #4caf50;
+        }
+
+        input[type="radio"] {
+          width: 15px;
+          height: 15px;
+        }
+      </style>
+  </head>
+  <body>
+
+      <!-- Logo da empresa -->
+      <div class="logo">
+        <img src="https://forumilos.com.br/wp-content/uploads/2024/08/CEVA-LOGISTICS-1024x308.png" alt="Logo CEVA Logistics" />
+      </div>
+
+      <div class="container">
+        <h2>Formulário de Recebimento de Carga</h2>
+          
+        <label>
+          <input type="radio" id="novoRecebimento" name="acao" value="novo" onclick="mostrarCamposNovo()" checked> Novo Recebimento
+        </label>
+        <label>
+          <input type="radio" id="editarRecebimento" name="acao" value="editar" onclick="mostrarCamposEdicao()"> Editar Recebimento
+        </label>
+
+        <!-- Campos para novo recebimento -->
+        <div id="campos_novo">
+          <h3>Dados do Novo Recebimento</h3>
+          <div class="input-group">
+            <label for="hora_chegada">Hora de Chegada na Doca:</label>
+            <input type="datetime-local" id="hora_chegada" required>
+          </div>
+          
+          <form id="form_recebimento" action="/submit" method="POST" onsubmit="enviarFormulario(event)">
+            <div class="input-group">
+              <label for="placa">Placa do Veículo:</label>
+              <input type="text" id="placa" name="placa" placeholder="Ex: ABC1234 ou ABC1D23" 
+                    pattern="^[A-Z]{3}\d{4}$|^[A-Z]{3}\d[A-Z]\d{2}$" 
+                    title="Formato de placa inválido. Exemplo: ABC1234 ou ABC1D23" 
+                    required />
+            </div>
+
+            <div class="input-group">
+              <label for="pallets">Quantidade de Pallets:</label>
+              <input type="number" id="pallets" required>
+            </div>
+
+            <div class="input-group">
+              <label for="nfs">Quantidade de NFs:</label>
+              <input type="number" id="nfs" required>
+            </div>
+
+            <div class="input-group">
+              <label for="transportadora">Transportadora:</label>
+              <select id="transportadora" required>
+                <option value="">Escolha a Transportadora</option>
+                <!-- As opções serão preenchidas pelo servidor -->
+                <? for (var i = 0; i < transportadoras.length; i++) { ?>
+                  <option value="<?= transportadoras[i] ?>"><?= transportadoras[i] ?></option>
+                <? } ?>
+              </select>
+            </div>
+
+            <button type="submit">Enviar</button>
+          </form>
+        </div>
+
+        <!-- Campos para editar recebimento -->
+        <div id="campos_edicao">
+          <h3>Editar Recebimento</h3>
+          <div class="input-group">
+            <label for="chave_primaria">Chave Primária:</label>
+            <input type="text" id="chave_primaria" readonly required />
+          </div>
+
+          <div class="input-group">
+            <label for="campo_editar">Selecione o campo a editar:</label>
+            <select id="campo_editar" onchange="mostrarCampoEdicao(this.value)" required>
+              <option value="Selecionar">Selecionar</option>
+              <option value="inicio">Início do Descarregamento</option>
+              <option value="fim">Fim do Descarregamento</option>
+            </select>
+          </div>
+
+          <div id="campo_inicio" style="display: none;">
+            <div class="input-group">
+              <label for="inicio_descarregamento">Início do Descarregamento:</label>
+              <input type="datetime-local" id="inicio_descarregamento" />
+            </div>
+          </div>
+
+          <div id="campo_fim" style="display: none;">
+            <div class="input-group">
+              <label for="fim_descarregamento">Fim do Descarregamento:</label>
+              <input type="datetime-local" id="fim_descarregamento" />
+            </div>
+          </div>
+
+          <button type="button" onclick="enviarFormulario(event)">Enviar Edição</button>
+        </div>
+      </div>
+
+    <script>
+      function enviarFormulario(event) {
+        event.preventDefault(); // Evita o envio padrão do formulário
+
+        if (!validarFormulario()) {
+          alert('Por favor, preencha todos os campos obrigatórios!');
+          return;
+        }
+
+        // Captura os dados do formulário
+        const acao = document.querySelector('input[name="acao"]:checked').value;
+        const formData = {
+          acao: acao,
+          hora_chegada: document.getElementById('hora_chegada').value,
+          placa: document.getElementById('placa').value,  // Valor da Placa
+          pallets: document.getElementById('pallets').value,
+          nfs: document.getElementById('nfs').value,
+          transportadora: document.getElementById('transportadora').value,
+          inicio_descarregamento: acao === 'editar' ? document.getElementById('inicio_descarregamento').value : '',
+          fim_descarregamento: acao === 'editar' ? document.getElementById('fim_descarregamento').value : '',
+          chave_primaria: acao === 'editar' ? document.getElementById('chave_primaria').value : '',
+          campo_editar: document.getElementById('campo_editar').value
+        };
+
+        console.log('Dados para enviar:', formData);  // Verificação no console
+
+        google.script.run.salvarDados(formData); // Chama o backend para salvar os dados
+        alert('Dados enviados com sucesso!');
+
+        // Limpar os campos após o envio
+        limparCamposFormulario();
+      }
+
+
+      function validarFormulario() {
+        const acao = document.querySelector('input[name="acao"]:checked').value;
+
+        if (acao === 'novo') {
+          const horaChegada = document.getElementById('hora_chegada').value;
+          const placa = document.getElementById('placa').value;
+          const pallets = document.getElementById('pallets').value;
+          const nfs = document.getElementById('nfs').value;
+          const transportadora = document.getElementById('transportadora').value;
+
+          if (!horaChegada || !placa || !pallets || !nfs || !transportadora) {
+            return false; // Retorna false se algum campo obrigatório não for preenchido
+          }
+        }
+
+        if (acao === 'editar') {
+          const chavePrimaria = document.getElementById('chave_primaria').value;
+          const campoEditar = document.getElementById('campo_editar').value;
+
+          if (!chavePrimaria || campoEditar === 'Selecionar') {
+            return false;
+          }
+
+          if (campoEditar === 'inicio' && !document.getElementById('inicio_descarregamento').value) {
+            return false;
+          }
+          if (campoEditar === 'fim' && !document.getElementById('fim_descarregamento').value) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+
+      function limparCamposFormulario() {
+        // Limpar os campos do formulário
+        document.getElementById('hora_chegada').value = '';
+        document.getElementById('placa').value = '';
+        document.getElementById('pallets').value = '';
+        document.getElementById('nfs').value = '';
+        document.getElementById('transportadora').value = '';
+        
+        // Limpar os campos de Edição
+        document.getElementById('chave_primaria').value = '';
+        document.getElementById('campo_editar').value = 'Selecionar';
+        
+        // Limpar os campos de desmarcação de início e fim do descarregamento
+        document.getElementById('inicio_descarregamento').value = '';
+        document.getElementById('fim_descarregamento').value = '';
+
+        // Marcar o radio button como "novo"
+        document.getElementById('novoRecebimento').checked = true;
+        
+        // Resetando a interface de edição
+        mostrarCamposNovo(); // Retorna para o estado de "Novo Recebimento"
+
+      }
+
+      function mostrarCamposEdicao() {
+        document.getElementById('campos_novo').style.display = 'none';
+        document.getElementById('campos_edicao').style.display = 'block';
+        document.getElementById('chave_primaria').readOnly = false;
+      }
+
+      function mostrarCamposNovo() {
+        document.getElementById('campos_edicao').style.display = 'none';
+        document.getElementById('campos_novo').style.display = 'block';
+        document.getElementById('chave_primaria').readOnly = true;
+        document.getElementById('chave_primaria').value = '';
+      }
+
+      function mostrarCampoEdicao(campo) {
+        document.getElementById('campo_inicio').style.display = 'none';
+        document.getElementById('campo_fim').style.display = 'none';
+
+        if (campo === 'inicio') {
+          document.getElementById('campo_inicio').style.display = 'block';
+        } else if (campo === 'fim') {
+          document.getElementById('campo_fim').style.display = 'block';
+        }
+      }
+
+      function buscarChavePrimaria(placa) {
+        if (placa) {
+          google.script.run.withSuccessHandler(function(chave) {
+            if (chave) {
+              document.getElementById('chave_primaria').value = chave; // Preenche a chave primária
+            }
+          }).buscarChavePrimaria(placa);
+        }
+      }
+    </script>
+  </body>
+</html>
