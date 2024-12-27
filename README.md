@@ -58,4 +58,4 @@ O projeto está organizado da seguinte forma:
   * [codigo.gs](./codigo.gs): Contém o script principal do Google Apps Script, responsável por receber os dados do formulário e gravá-los na planilha.
   * [ScriptPlanilha.gs](./ScriptsPlanilha.gs): Contém funções auxiliares para interagir com a planilha Google Sheets, como criar novas linhas e preencher células.
 * **Frontend:**
-  * [formulario.html](./formulario.html): Cria um formulário HTML para coleta de dados do usuário e também contem o CSS
+  * [formulario.html](./formulario.html): Cria um formulário HTML para coleta de dados do usuário e também contém o CSS
