@@ -48,3 +48,14 @@ Implementação de notificações: Enviar notificações por e-mail ou outras pl
 Este é um projeto básico e pode ser customizado e expandido de acordo com as necessidades específicas de cada empresa.
 O código pode ser otimizado e melhorado em diversos aspectos.
 É importante realizar testes unitários para garantir a qualidade do código.
+
+
+## Estrutura do Projeto
+
+O projeto está organizado da seguinte forma:
+
+* **Backend:**
+  * [codigo.gs](./codigo.gs): Contém o script principal do Google Apps Script, responsável por receber os dados do formulário e gravá-los na planilha.
+  * [ScriptPlanilha.gs](./ScriptPlanilha.gs): Contém funções auxiliares para interagir com a planilha Google Sheets, como criar novas linhas e preencher células.
+* **Frontend:**
+  * [formulario.html](./formulario.html): Cria um formulário HTML para coleta de dados do usuário e também contem o CSS
