@@ -172,9 +172,9 @@
           <form id="form_recebimento" action="/submit" method="POST" onsubmit="enviarFormulario(event)">
             <div class="input-group">
               <label for="placa">Placa do Veículo:</label>
-              <input type="text" id="placa" name="placa" placeholder="Ex: ABC1234 ou ABC1D23" 
+              <input type="text" id="placa" name="placa" placeholder="Ex: Padrão BR ABC1234 ou Mercosul ABC1D23" 
                     pattern="^[A-Z]{3}\d{4}$|^[A-Z]{3}\d[A-Z]\d{2}$" 
-                    title="Formato de placa inválido. Exemplo: ABC1234 ou ABC1D23" 
+                    title="Formato de placa inválido. Exemplo: Padrão BR ABC1234 ou Mercosul ABC1D23" 
                     required />
             </div>
 
@@ -207,8 +207,8 @@
         <div id="campos_edicao">
           <h3>Editar Recebimento</h3>
           <div class="input-group">
-            <label for="chave_primaria">Chave Primária:</label>
-            <input type="text" id="chave_primaria" readonly required />
+            <label for="chave_primaria">Código de Rastreio:</label>
+            <input type="text" id="chave_primaria" readonly required placeholder="Ex: Placa.Data"/>
           </div>
 
           <div class="input-group">
@@ -242,9 +242,43 @@
       function enviarFormulario(event) {
         event.preventDefault(); // Evita o envio padrão do formulário
 
+        // Validação do formulário
         if (!validarFormulario()) {
           alert('Por favor, preencha todos os campos obrigatórios!');
           return;
+        }
+
+        // Verificação de datas no futuro
+
+        // Verifica se a "Hora de Chegada na Doca" é uma data no futuro
+        const horaChegada = document.getElementById('hora_chegada').value;
+        if (horaChegada) {
+          const horaChegadaDate = new Date(horaChegada);
+          const dataAtual = new Date();
+          if (horaChegadaDate > dataAtual) {
+            alert('Erro: A hora de chegada não pode ser no futuro!');
+            return;
+          }
+        }
+
+        // Verificação para o início do descarregamento
+        if (document.getElementById('inicio_descarregamento').value) {
+          const inicioDescarregamento = new Date(document.getElementById('inicio_descarregamento').value);
+          const dataAtual = new Date();
+          if (inicioDescarregamento > dataAtual) {
+            alert('Erro: A data de início do descarregamento não pode ser no futuro!');
+            return;
+          }
+        }
+
+        // Verificação para o fim do descarregamento
+        if (document.getElementById('fim_descarregamento').value) {
+          const fimDescarregamento = new Date(document.getElementById('fim_descarregamento').value);
+          const dataAtual = new Date();
+          if (fimDescarregamento > dataAtual) {
+            alert('Erro: A data de fim do descarregamento não pode ser no futuro!');
+            return;
+          }
         }
 
         // Captura os dados do formulário
@@ -262,13 +296,23 @@
           campo_editar: document.getElementById('campo_editar').value
         };
 
-        console.log('Dados para enviar:', formData);  // Verificação no console
-
-        google.script.run.salvarDados(formData); // Chama o backend para salvar os dados
-        alert('Dados enviados com sucesso!');
-
-        // Limpar os campos após o envio
-        limparCamposFormulario();
+        // Verifica se a chave primária já existe
+        if (acao === 'novo') {
+          google.script.run.withSuccessHandler(function(chaveExistente) {
+            if (chaveExistente) {
+              alert('Erro: A chave primária já existe!');
+            } else {
+              // Caso contrário, envia os dados
+              google.script.run.salvarDados(formData);
+              alert('Dados enviados com sucesso!');
+              limparCamposFormulario();
+            }
+          }).verificarChavePrimaria(formData.placa, formData.hora_chegada);
+        } else {
+          google.script.run.salvarDados(formData);
+          alert('Dados enviados com sucesso!');
+          limparCamposFormulario();
+        }
       }
 
 
@@ -308,27 +352,34 @@
 
 
       function limparCamposFormulario() {
-        // Limpar os campos do formulário
-        document.getElementById('hora_chegada').value = '';
-        document.getElementById('placa').value = '';
-        document.getElementById('pallets').value = '';
-        document.getElementById('nfs').value = '';
-        document.getElementById('transportadora').value = '';
-        
-        // Limpar os campos de Edição
-        document.getElementById('chave_primaria').value = '';
-        document.getElementById('campo_editar').value = 'Selecionar';
-        
-        // Limpar os campos de desmarcação de início e fim do descarregamento
-        document.getElementById('inicio_descarregamento').value = '';
-        document.getElementById('fim_descarregamento').value = '';
+          // Seleciona os elementos do formulário
+          const camposFormulario = [
+              'hora_chegada', 'placa', 'pallets', 'nfs', 'transportadora',
+              'chave_primaria', 'campo_editar', 'inicio_descarregamento', 'fim_descarregamento'
+          ];
 
-        // Marcar o radio button como "novo"
-        document.getElementById('novoRecebimento').checked = true;
-        
-        // Resetando a interface de edição
-        mostrarCamposNovo(); // Retorna para o estado de "Novo Recebimento"
+          // Limpa os campos de entrada
+          camposFormulario.forEach(campoId => {
+              const campo = document.getElementById(campoId);
+              if (campo) {
+                  campo.value = '';  // Limpa o valor do campo
+              }
+          });
 
+          // Limpa o campo 'campo_editar' e redefine para "Selecionar"
+          const campoEditar = document.getElementById('campo_editar');
+          if (campoEditar) {
+              campoEditar.value = 'Selecionar';
+          }
+
+          // Marca o radio button "novo"
+          const novoRecebimentoRadio = document.getElementById('novoRecebimento');
+          if (novoRecebimentoRadio) {
+              novoRecebimentoRadio.checked = true;
+          }
+
+          // Resetando a interface de edição
+          mostrarCamposNovo(); // Retorna para o estado de "Novo Recebimento"
       }
 
       function mostrarCamposEdicao() {
