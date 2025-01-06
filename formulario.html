@@ -61,20 +61,23 @@
           height: 44px;
         }
 
-        /* Estilos para os botões */
+        /* Estilo do botão */
         button {
-          width: 100%;
-          padding: 12px;
-          background-color: #021d49;
-          color: white;
-          border: none;
-          font-size: 18px;
-          border-radius: 5px;
-          cursor: pointer;
+          background-color: #E1261C;  /* Cor de fundo vermelha */
+          color: white;  /* Cor do texto branca */
+          padding: 12px 20px;  /* Espaçamento interno, mais amplo */
+          border: none;  /* Remove borda */
+          border-radius: 8px;  /* Bordas arredondadas */
+          font-weight: bold;  /* Texto em negrito */
+          font-size: 16px;  /* Tamanho de fonte legível */
+          cursor: pointer;  /* Muda o cursor para mãozinha */
+          transition: background-color 0.3s, transform 0.2s;  /* Suaviza as transições de cor e efeito de clique */
+          width: 100%;  /* Largura do botão ajustada para preencher o espaço disponível */
+          box-sizing: border-box;  /* Inclui o padding e a borda no cálculo da largura */
         }
 
         button:hover {
-          background-color: #021d49;
+          background-color: #45a049;
         }
 
         /* Título de seção */
@@ -166,7 +169,7 @@
           <h3>Dados do Novo Recebimento</h3>
           <div class="input-group">
             <label for="hora_chegada">Hora de Chegada na Doca:</label>
-            <input type="datetime-local" id="hora_chegada" required>
+            <input type="datetime-local" id="hora_chegada" required readonly>
           </div>
           
           <form id="form_recebimento" action="/submit" method="POST" onsubmit="enviarFormulario(event)">
@@ -223,14 +226,14 @@
           <div id="campo_inicio" style="display: none;">
             <div class="input-group">
               <label for="inicio_descarregamento">Início do Descarregamento:</label>
-              <input type="datetime-local" id="inicio_descarregamento" />
+              <input type="datetime-local" id="inicio_descarregamento" readonly>
             </div>
           </div>
 
           <div id="campo_fim" style="display: none;">
             <div class="input-group">
               <label for="fim_descarregamento">Fim do Descarregamento:</label>
-              <input type="datetime-local" id="fim_descarregamento" />
+              <input type="datetime-local" id="fim_descarregamento" readonly>
             </div>
           </div>
 
@@ -349,6 +352,31 @@
 
         return true;
       }
+
+      window.onload = function() {
+        // Função para atualizar todos os campos de data e hora a cada segundo
+        setInterval(function() {
+          const agora = new Date();
+
+          // Obter data e hora no formato ISO, mas ajustado para o fuso horário local
+          const ano = agora.getFullYear();
+          const mes = String(agora.getMonth() + 1).padStart(2, '0');  // Meses começam do 0 (Janeiro é 0)
+          const dia = String(agora.getDate()).padStart(2, '0');
+          const horas = String(agora.getHours()).padStart(2, '0');
+          const minutos = String(agora.getMinutes()).padStart(2, '0');
+
+          // Formato de data no padrão yyyy-MM-ddTHH:mm
+          const dataFormatada = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
+
+          // Seleciona todos os campos do tipo datetime-local
+          const camposDataHora = document.querySelectorAll('input[type="datetime-local"]');
+
+          // Atualiza o valor de cada campo com a hora atual
+          camposDataHora.forEach(function(campo) {
+            campo.value = dataFormatada;
+          });
+        }, 1000);  // Atualiza a cada 1 segundo (1000 milissegundos)
+      };
 
 
       function limparCamposFormulario() {
