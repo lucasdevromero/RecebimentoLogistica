@@ -1,4 +1,3 @@
-``` javascript
 function doGet() {
   const transportadoras = getTransportadoras();
   const template = HtmlService.createTemplateFromFile('formulario');
