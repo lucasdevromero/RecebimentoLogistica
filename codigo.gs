@@ -63,15 +63,13 @@ function salvarDados(formData) {
 }
 
 // Função para verificar se a chave primária já existe
-function verificarChavePrimaria(sheet, chavePrimaria) {
-  // Obtém apenas os dados da coluna onde a chave primária está armazenada
-  const dados = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues(); // A partir da linha 2 (presumindo que a primeira linha é cabeçalho)
-  
-  // Utiliza um Set para verificar rapidamente se a chave existe
-  const chavesExistentes = new Set(dados.flat()); // .flat() para transformar o array 2D em 1D
-  
+function verificarChavePrimaria(chavePrimaria) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recebimentos');
+  const dados = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues(); // A partir da linha 2
+  const chavesExistentes = new Set(dados.flat());
   return chavesExistentes.has(chavePrimaria); // Retorna true se a chave já existir
 }
+
 
 function encontrarLinha(sheet, chave) {
   // Obtém apenas a coluna com as chaves primárias (coluna 1, a partir da linha 2)
@@ -103,16 +101,16 @@ function buscarChavePrimaria(placa) {
   return '';  // Retorna vazio se não encontrar a placa
 }
 
-function verificarChavePrimaria(placa, horaChegada) {
+function verificarChavePrimaria2(placa, horaChegada) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recebimentos');
   const chavePrimaria = placa + '.' + Utilities.formatDate(new Date(horaChegada), Session.getScriptTimeZone(), 'dd/MM/yyyy');
   
   // Obtém apenas a primeira coluna (onde está a chave primária)
-  const chavesExistentes = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();  // Carrega a coluna de chave primária
+  const chavesExistentes2 = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();  // Carrega a coluna de chave primária
   
   // Itera sobre as chaves primárias e verifica se já existe
-  for (let i = 0; i < chavesExistentes.length; i++) {
-    if (chavesExistentes[i][0] === chavePrimaria) {
+  for (let i = 0; i < chavesExistentes2.length; i++) {
+    if (chavesExistentes2[i][0] === chavePrimaria) {
       return true;  // Se já existir, retorna verdadeiro
     }
   }
