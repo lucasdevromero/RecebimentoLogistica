@@ -252,8 +252,6 @@
         }
 
         // Verificação de datas no futuro
-
-        // Verifica se a "Hora de Chegada na Doca" é uma data no futuro
         const horaChegada = document.getElementById('hora_chegada').value;
         if (horaChegada) {
           const horaChegadaDate = new Date(horaChegada);
@@ -299,7 +297,7 @@
           campo_editar: document.getElementById('campo_editar').value
         };
 
-        // Verifica se a chave primária já existe
+        // Verifica se a chave primária já existe para novos registros
         if (acao === 'novo') {
           google.script.run.withSuccessHandler(function(chaveExistente) {
             if (chaveExistente) {
@@ -310,8 +308,29 @@
               alert('Dados enviados com sucesso!');
               limparCamposFormulario();
             }
-          }).verificarChavePrimaria(formData.placa, formData.hora_chegada);
+          }).verificarChavePrimaria2(formData.placa, formData.hora_chegada);
+        } else if (acao === 'editar') {
+          // Verifica se a chave primária existe para edição
+          const chavePrimaria = formData.chave_primaria;
+          if (!chavePrimaria) {
+            alert('Erro: A chave primária não foi fornecida!');
+            return;
+          }
+
+          // Verifique se a chave primária existe na planilha
+          google.script.run.withSuccessHandler(function(chaveExistente) {
+            if (!chaveExistente) {
+              alert('Erro: A chave primária informada não existe!');
+              return;
+            } else {
+              // Caso a chave exista, salva os dados
+              google.script.run.salvarDados(formData);
+              alert('Dados atualizados com sucesso!');
+              limparCamposFormulario();
+            }
+          }).verificarChavePrimaria(formData.chave_primaria);
         } else {
+          // Caso contrário, envia os dados
           google.script.run.salvarDados(formData);
           alert('Dados enviados com sucesso!');
           limparCamposFormulario();
