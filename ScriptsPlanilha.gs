@@ -1,87 +1,109 @@
-// função para trazer em formato BR as datas inseridas
+// Função para formatar as datas nas colunas B, G e H
 function formatarDatas() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('recebimentos');
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recebimentos');
   
   // Definindo os intervalos de colunas que precisam ser formatados
   var colunasParaFormatar = ['B', 'G', 'H'];
-  var format = "dd/MM/yyyy HH:mm:ss"; 
+  var format = "dd/MM/yyyy HH:mm:ss"; // Formato desejado (BR)
 
   // Aplica o formato a cada coluna que contém dados
   colunasParaFormatar.forEach(function(coluna) {
-    var range = sheet.getRange(coluna + "2:" + coluna + sheet.getLastRow()); // Define o intervalo dinâmico, até a última linha com dados
+    var range = sheet.getRange(coluna + "2:" + coluna + sheet.getLastRow()); // Define o intervalo dinâmico até a última linha com dados
     range.setNumberFormat(format);
   });
 }
 
-
-function calcularDiferencaEmHoras() {
-  var planilha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('recebimentos');
-  
-  // Definir os intervalos de dados que serão utilizados para calcular as diferenças
+function calcularDiferencaEmHorasColunaI() {
+  var planilha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recebimentos');
   var ultimaLinha = planilha.getLastRow();
-  var intervaloDados = planilha.getRange(2, 1, ultimaLinha - 1, 8).getValues(); // Pega as colunas A a H, começando da linha 2
+  var intervaloDados = planilha.getRange(2, 1, ultimaLinha - 1, 8).getValues(); // Colunas A a H
+  var valoresI = []; // Array para armazenar os valores de I
   
-  // Obter os valores das colunas I, J e K para verificar se já existem resultados
-  var valoresI = planilha.getRange(2, 9, ultimaLinha - 1, 1).getValues(); // Coluna I
-  var valoresJ = planilha.getRange(2, 10, ultimaLinha - 1, 1).getValues(); // Coluna J
-  var valoresK = planilha.getRange(2, 11, ultimaLinha - 1, 1).getValues(); // Coluna K
-  
-  // Função para formatar a diferença em horas e minutos no formato HH:MM
   function formatarDiferencaEmHoras(diferencaEmMillis) {
-    if (diferencaEmMillis !== null) {
-      var totalMinutos = Math.floor(diferencaEmMillis / (1000 * 60)); // Converte para minutos totais
-      var horas = Math.floor(totalMinutos / 60); // Pega as horas inteiras
-      var minutos = totalMinutos % 60; // Pega os minutos restantes
-      return (horas < 10 ? '0' + horas : horas) + ':' + (minutos < 10 ? '0' + minutos : minutos); // Formata como HH:MM
+    if (diferencaEmMillis !== null && diferencaEmMillis !== undefined) {
+      var totalMinutos = Math.floor(diferencaEmMillis / (1000 * 60));
+      var horas = Math.floor(totalMinutos / 60);
+      var minutos = totalMinutos % 60;
+      return (horas < 10 ? '0' + horas : horas) + ':' + (minutos < 10 ? '0' + minutos : minutos);
     }
-    return null; // Se não houver diferença, retorna null
+    return null;
   }
   
-  // Loop nas linhas da planilha, começando da linha 2
   for (var i = 0; i < intervaloDados.length; i++) {
-    var data1 = intervaloDados[i][6]; // Coluna G (índice 6)
-    var data2 = intervaloDados[i][7]; // Coluna H (índice 7)
-    var data3 = intervaloDados[i][1]; // Coluna B (índice 1)
+    var data1 = intervaloDados[i][6]; // Coluna G
+    var data3 = intervaloDados[i][1]; // Coluna B
     
-    // Verificar se alguma das colunas I, J ou K está vazia
-    if (!valoresI[i][0] || !valoresJ[i][0] || !valoresK[i][0]) {
-      var diferenca1 = null;
-      var diferenca2 = null;
-      var diferenca3 = null;
-      
-      // Garantir que as datas estão sendo interpretadas corretamente
-      if (data1 instanceof Date && data2 instanceof Date) {
-        // Calcular a diferença entre data2 e data1 (colunas G e H)
-        diferenca1 = data2.getTime() - data1.getTime(); // Obtém a diferença em milissegundos
-      }
-      
-      if (data2 instanceof Date && data3 instanceof Date) {
-        // Calcular a diferença entre data2 e data3 (colunas B e H)
-        diferenca2 = data2.getTime() - data3.getTime(); // Obtém a diferença em milissegundos
-      }
-
-      if (data1 instanceof Date && data3 instanceof Date) {
-        // Calcular a diferença entre data1 e data3 (colunas B e G)
-        diferenca3 = data1.getTime() - data3.getTime(); // Obtém a diferença em milissegundos
-      }
-      
-      // Atualizar os resultados nas colunas I, J e K
-      if (!valoresI[i][0]) {
-        valoresI[i][0] = formatarDiferencaEmHoras(diferenca3); // Coloca o resultado na coluna I
-      }
-      if (!valoresJ[i][0]) {
-        valoresJ[i][0] = formatarDiferencaEmHoras(diferenca1); // Coloca o resultado na coluna J
-      }
-      if (!valoresK[i][0]) {
-        valoresK[i][0] = formatarDiferencaEmHoras(diferenca2); // Coloca o resultado na coluna K
-      }
+    var diferenca = null;
+    if (data1 instanceof Date && data3 instanceof Date) {
+      diferenca = data1.getTime() - data3.getTime();
     }
+
+    valoresI.push([formatarDiferencaEmHoras(diferenca)]);
   }
   
-  // Preencher as colunas I, J e K com os resultados calculados
-  planilha.getRange(2, 9, valoresI.length, 1).setValues(valoresI); // Preenche a coluna I (índice 8), começando da linha 2
-  planilha.getRange(2, 10, valoresJ.length, 1).setValues(valoresJ); // Preenche a coluna J (índice 9), começando da linha 2
-  planilha.getRange(2, 11, valoresK.length, 1).setValues(valoresK); // Preenche a coluna K (índice 10), começando da linha 2
+  planilha.getRange(2, 9, valoresI.length, 1).setValues(valoresI); // Preenche a coluna I
+}
+
+function calcularDiferencaEmHorasColunaJ() {
+  var planilha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recebimentos');
+  var ultimaLinha = planilha.getLastRow();
+  var intervaloDados = planilha.getRange(2, 1, ultimaLinha - 1, 8).getValues(); // Colunas A a H
+  var valoresJ = []; // Array para armazenar os valores de J
+  
+  function formatarDiferencaEmHoras(diferencaEmMillis) {
+    if (diferencaEmMillis !== null && diferencaEmMillis !== undefined) {
+      var totalMinutos = Math.floor(diferencaEmMillis / (1000 * 60));
+      var horas = Math.floor(totalMinutos / 60);
+      var minutos = totalMinutos % 60;
+      return (horas < 10 ? '0' + horas : horas) + ':' + (minutos < 10 ? '0' + minutos : minutos);
+    }
+    return null;
+  }
+  
+  for (var i = 0; i < intervaloDados.length; i++) {
+    var data1 = intervaloDados[i][6]; // Coluna G
+    var data2 = intervaloDados[i][7]; // Coluna H
+    
+    var diferenca = null;
+    if (data1 instanceof Date && data2 instanceof Date) {
+      diferenca = data2.getTime() - data1.getTime();
+    }
+
+    valoresJ.push([formatarDiferencaEmHoras(diferenca)]);
+  }
+  
+  planilha.getRange(2, 10, valoresJ.length, 1).setValues(valoresJ); // Preenche a coluna J
+}
+
+function calcularDiferencaEmHorasColunaK() {
+  var planilha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recebimentos');
+  var ultimaLinha = planilha.getLastRow();
+  var intervaloDados = planilha.getRange(2, 1, ultimaLinha - 1, 8).getValues(); // Colunas A a H
+  var valoresK = []; // Array para armazenar os valores de K
+  
+  function formatarDiferencaEmHoras(diferencaEmMillis) {
+    if (diferencaEmMillis !== null && diferencaEmMillis !== undefined) {
+      var totalMinutos = Math.floor(diferencaEmMillis / (1000 * 60));
+      var horas = Math.floor(totalMinutos / 60);
+      var minutos = totalMinutos % 60;
+      return (horas < 10 ? '0' + horas : horas) + ':' + (minutos < 10 ? '0' + minutos : minutos);
+    }
+    return null;
+  }
+  
+  for (var i = 0; i < intervaloDados.length; i++) {
+    var data2 = intervaloDados[i][7]; // Coluna H
+    var data3 = intervaloDados[i][1]; // Coluna B
+    
+    var diferenca = null;
+    if (data2 instanceof Date && data3 instanceof Date) {
+      diferenca = data2.getTime() - data3.getTime();
+    }
+
+    valoresK.push([formatarDiferencaEmHoras(diferenca)]);
+  }
+  
+  planilha.getRange(2, 11, valoresK.length, 1).setValues(valoresK); // Preenche a coluna K
 }
 
 
@@ -92,21 +114,32 @@ function atualizarStatus() {
   
   for (let i = linhaInicial; i < data.length; i++) {
     const colunaA = data[i][0]; // Coluna A (Índice 0) - Verificar se a coluna A está preenchida
-    const colunaH = data[i][7]; // Coluna H (Índice 7) - Verificar se a coluna H está preenchida
-    const status = colunaH ? "Finalizado" : "Pendente"; // Se a coluna H estiver preenchida, "Finalizado", senão "Pendente"
+    const colunaG = data[i][6]; // Coluna G (Índice 6)
+    const colunaH = data[i][7]; // Coluna H (Índice 7)
+    
+    let status = ''; // Variável para armazenar o status a ser atualizado
+    
+    // Definindo o status com base nas condições das colunas G e H
+    if (!colunaG && !colunaH) {
+      status = "Pendente - Inicio"; // Quando G e H estão vazias
+    } else if (colunaG && !colunaH) {
+      status = "Pendente - Fim"; // Quando G está preenchida e H está vazia
+    } else if (colunaG && colunaH) {
+      status = "Finalizado"; // Quando G e H estão preenchidas
+    }
     
     // Se a coluna A estiver em branco, apagar a informação na coluna L (Índice 11)
     if (!colunaA) {
       sheet.getRange(i + 1, 12).clearContent(); // Apaga o conteúdo da coluna L (12)
     } else {
-      // Se a coluna A não estiver em branco, atualizar a coluna L com o status
+      // Se a coluna A não estiver em branco, atualizar a coluna L com o status calculado
       sheet.getRange(i + 1, 12).setValue(status); // i + 1 pois a contagem das linhas no Google Sheets começa de 1
     }
   }
 }
 
 function apagarDadosSeColunaAVazia() {
-  var planilha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('recebimentos');
+  var planilha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recebimentos');
   
   // Verifica se a aba 'recebimento' existe
   if (!planilha) {
@@ -138,7 +171,3 @@ function apagarDadosSeColunaAVazia() {
     }
   }
 }
-
-
-
-
