@@ -117,3 +117,39 @@ function verificarChavePrimaria2(placa, horaChegada) {
   
   return false;  // Se não encontrar a chave, retorna falso
 }
+
+function buscarCodigosPendentes() {
+    var planilha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Recebimentos"); // Acessa a planilha
+    var dados = planilha.getRange(2, 1, planilha.getLastRow() - 1, 12).getValues(); // Obtém as linhas de dados da planilha (ignorando o cabeçalho)
+    var codigosPendentes = [];
+    var codigosProcessados = {}; // Objeto para armazenar códigos já processados
+
+    // Loop para percorrer as linhas e verificar o status
+    for (var i = 0; i < dados.length; i++) {
+        var codigo = dados[i][0]; // Coluna A (Código de Rastreio)
+        var status = dados[i][11]; // Coluna L (Status)
+
+        // Verifica se o status é "Pendente - Inicio" ou "Pendente - Fim" e se o código ainda não foi adicionado
+        if ((status === "Pendente - Inicio" || status === "Pendente - Fim") && !codigosProcessados[codigo]) {
+            codigosPendentes.push({codigo: codigo});
+            codigosProcessados[codigo] = true; // Marca o código como processado
+        }
+    }
+
+    return codigosPendentes; // Retorna os códigos de rastreio com status "Pendente - Inicio" ou "Pendente - Fim" e sem duplicatas
+}
+
+// Função para buscar o status do descarregamento baseado no código de rastreio
+function buscarStatusDescarregamento(codigo) {
+    const planilha = SpreadsheetApp.getActiveSpreadsheet();
+    const aba = planilha.getSheetByName("Recebimentos");  // Ajuste o nome da aba conforme necessário
+    const dados = aba.getDataRange().getValues();  // Obtém todos os dados da planilha
+    
+    for (let i = 0; i < dados.length; i++) {
+        if (dados[i][0] === codigo) {  // Supondo que a coluna 0 (A) contém os códigos de rastreio
+            return dados[i][11];  // Supondo que a coluna L (12ª coluna) contém o status "Pendente - Início" ou "Pendente - Fim"
+        }
+    }
+    
+    return null;  // Se o código não for encontrado
+}
