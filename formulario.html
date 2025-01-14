@@ -97,21 +97,6 @@
           margin-bottom: 20px;
         }
 
-        /* Responsividade para telas pequenas */
-        @media (max-width: 480px) {
-          h2 {
-            font-size: 20px;
-          }
-
-          .container {
-            padding: 15px;
-          }
-
-          button {
-            font-size: 16px;
-          }
-        }
-
         /* Logo da empresa */
         .logo {
           position: absolute;
@@ -145,198 +130,353 @@
           width: 15px;
           height: 15px;
         }
+
+        /* Responsividade para telas pequenas */
+        @media (max-width: 480px) {
+          h2 {
+            font-size: 20px;
+          }
+
+          .container {
+            padding: 15px;
+          }
+
+          button {
+            font-size: 16px;
+          }
+
+          /* Esconder logo em telas pequenas */
+          .logo {
+            display: none;
+          }
+        }
+
+        /* Tornar o campo desabilitado e visualmente consistente */
+        input[type="datetime-local"]:disabled {
+          background-color: #f0f0f0;  /* Cor de fundo desabilitada */
+          color: #777;  /* Cor do texto de campo desabilitado */
+          border: 1px solid #ccc;  /* Borda mais suave para campos desabilitados */
+          cursor: not-allowed;  /* Cursor indicando que não pode ser clicado */
+        }
+
+        /* Loading campo de novo recebimento */
+        #barra-progressao-container {
+          display: none;
+          color: #E1261C;
+          font-weight: bold;
+          text-align: center;
+        }
+
+        /* Loading campo de editar recebimento */
+        #barra-progressao-container-edicao {
+          display: none;
+          color: #E1261C;
+          font-weight: bold;
+          text-align: center;
+        }
+
+        progress {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 10px; /* Diminui a altura da barra de progresso */
+          margin-bottom:1px; /* Adiciona espaço entre a barra de progresso e o botão */
+        }
+
+        progress::-webkit-progress-bar {
+          background-color: #f3f3f3;
+          border-radius: 10px;
+        }
+
+        progress::-webkit-progress-value {
+          background-color: #4caf50;
+          border-radius: 10px;
+        }
+
+        progress::-moz-progress-bar {
+          background-color: #4caf50;
+          border-radius: 10px;
+        }
       </style>
   </head>
   <body>
+        <!-- Logo da empresa -->
+        <div class="logo">
+          <img src="https://forumilos.com.br/wp-content/uploads/2024/08/CEVA-LOGISTICS-1024x308.png" alt="Logo CEVA Logistics" />
+        </div>
 
-      <!-- Logo da empresa -->
-      <div class="logo">
-        <img src="https://forumilos.com.br/wp-content/uploads/2024/08/CEVA-LOGISTICS-1024x308.png" alt="Logo CEVA Logistics" />
-      </div>
-
-      <div class="container">
-        <h2>Formulário de Recebimento de Carga</h2>
+        <div class="container">
+          <h2>Formulário de Recebimento de Carga</h2>
           
-        <label>
-          <input type="radio" id="novoRecebimento" name="acao" value="novo" onclick="mostrarCamposNovo()" checked> Novo Recebimento
-        </label>
-        <label>
-          <input type="radio" id="editarRecebimento" name="acao" value="editar" onclick="mostrarCamposEdicao()"> Editar Recebimento
-        </label>
+          <label>
+            <input type="radio" id="novoRecebimento" name="acao" value="novo" onclick="mostrarCamposNovo()" checked> Novo
+          </label>
+          <label>
+            <input type="radio" id="editarRecebimento" name="acao" value="editar" onclick="mostrarCamposEdicao()"> Editar
+          </label>
 
-        <!-- Campos para novo recebimento -->
-        <div id="campos_novo">
-          <h3>Dados do Novo Recebimento</h3>
-          <div class="input-group">
-            <label for="hora_chegada">Hora de Chegada na Doca:</label>
-            <input type="datetime-local" id="hora_chegada" required readonly>
+          <!-- Campos para novo recebimento -->
+          <div id="campos_novo">
+            <h3>Dados do Novo Recebimento</h3>
+            <div class="input-group">
+              <label for="hora_chegada">Hora de Chegada na Doca:</label>
+              <input type="datetime-local" id="hora_chegada" required disabled>
+            </div>
+            
+            <form id="form_recebimento" action="/submit" method="POST" onsubmit="enviarFormulario(event)">
+              <div class="input-group">
+                <label for="placa">Placa do Veículo:</label>
+                <input type="text" id="placa" name="placa" placeholder="Ex: Padrão BR ABC1234 ou Mercosul ABC1D23" 
+                      pattern="^[A-Z]{3}\d{4}$|^[A-Z]{3}\d[A-Z]\d{2}$" 
+                      title="Formato de placa inválido. Exemplo: Padrão BR ABC1234 ou Mercosul ABC1D23" 
+                      required />
+              </div>
+
+              <div class="input-group">
+                <label for="pallets">Quantidade de Pallets:</label>
+                <input type="number" id="pallets" required>
+              </div>
+
+              <div class="input-group">
+                <label for="nfs">Quantidade de NFs:</label>
+                <input type="number" id="nfs" required>
+              </div>
+
+              <div class="input-group">
+                <label for="transportadora">Transportadora:</label>
+                <select id="transportadora" required>
+                  <option value="">Escolha a Transportadora</option>
+                  <!-- As opções serão preenchidas pelo servidor -->
+                  <? for (var i = 0; i < transportadoras.length; i++) { ?>
+                    <option value="<?= transportadoras[i] ?>"><?= transportadoras[i] ?></option>
+                  <? } ?>
+                </select>
+              </div>
+
+              <button type="submit">Enviar</button>
+
+              <!-- Barra de Progresso para Novo Recebimento -->
+              <div id="barra-progressao-container" style="display: none;">
+                <progress id="barra-progressao" value="0" max="100" style="width: 100%;"></progress>
+                <label for="progress">Enviando...</label>
+              </div>
+
+            </form>
           </div>
-          
-          <form id="form_recebimento" action="/submit" method="POST" onsubmit="enviarFormulario(event)">
-            <div class="input-group">
-              <label for="placa">Placa do Veículo:</label>
-              <input type="text" id="placa" name="placa" placeholder="Ex: Padrão BR ABC1234 ou Mercosul ABC1D23" 
-                    pattern="^[A-Z]{3}\d{4}$|^[A-Z]{3}\d[A-Z]\d{2}$" 
-                    title="Formato de placa inválido. Exemplo: Padrão BR ABC1234 ou Mercosul ABC1D23" 
-                    required />
-            </div>
 
+          <!-- Campos para editar recebimento -->
+          <div id="campos_edicao">
+            <h3>Editar Recebimento</h3>
             <div class="input-group">
-              <label for="pallets">Quantidade de Pallets:</label>
-              <input type="number" id="pallets" required>
-            </div>
-
-            <div class="input-group">
-              <label for="nfs">Quantidade de NFs:</label>
-              <input type="number" id="nfs" required>
-            </div>
-
-            <div class="input-group">
-              <label for="transportadora">Transportadora:</label>
-              <select id="transportadora" required>
-                <option value="">Escolha a Transportadora</option>
-                <!-- As opções serão preenchidas pelo servidor -->
-                <? for (var i = 0; i < transportadoras.length; i++) { ?>
-                  <option value="<?= transportadoras[i] ?>"><?= transportadoras[i] ?></option>
-                <? } ?>
+              <label for="chave_primaria">Código de Rastreio:</label>
+              <select id="chave_primaria" onchange="buscarStatusDescarregamento(this.value)" name="chave_primaria" required>
+                <option value="">Selecione um código de rastreio</option>
+                <!-- As opções serão preenchidas dinamicamente via JavaScript -->
               </select>
             </div>
 
-            <button type="submit">Enviar</button>
-          </form>
-        </div>
+            <!-- Mensagem de Carregamento para Códigos de Rastreamento -->
+            <div id="mensagemCarregandoCodigos" style="display:none; color: #888; font-size: 0.85em; font-style: italic; margin-top: 5px;">
+              Carregando códigos de rastreio...
+            </div>
 
-        <!-- Campos para editar recebimento -->
-        <div id="campos_edicao">
-          <h3>Editar Recebimento</h3>
-          <div class="input-group">
-            <label for="chave_primaria">Código de Rastreio:</label>
-            <input type="text" id="chave_primaria" readonly required placeholder="Ex: Placa.Data"/>
-          </div>
-
-          <div class="input-group">
-            <label for="campo_editar">Selecione o campo a editar:</label>
-            <select id="campo_editar" onchange="mostrarCampoEdicao(this.value)" required>
-              <option value="Selecionar">Selecionar</option>
-              <option value="inicio">Início do Descarregamento</option>
-              <option value="fim">Fim do Descarregamento</option>
-            </select>
-          </div>
-
-          <div id="campo_inicio" style="display: none;">
             <div class="input-group">
-              <label for="inicio_descarregamento">Início do Descarregamento:</label>
-              <input type="datetime-local" id="inicio_descarregamento" readonly>
+                <label for="campo_editar">Selecione o campo a editar:</label>
+                <select id="campo_editar" onchange="mostrarCampoEdicao(this.value)" required disabled>
+                    <option value="Selecionar">Selecionar</option>
+                    <option value="inicio">Início do Descarregamento</option>
+                    <option value="fim">Fim do Descarregamento</option>
+                </select>
+            </div>
+
+            <div id="campo_inicio" style="display: none;">
+                <div class="input-group">
+                    <label for="inicio_descarregamento">Início do Descarregamento:</label>
+                    <input type="datetime-local" id="inicio_descarregamento" required disabled>
+                </div>
+            </div>
+
+            <div id="campo_fim" style="display: none;">
+                <div class="input-group">
+                    <label for="fim_descarregamento">Fim do Descarregamento:</label>
+                    <input type="datetime-local" id="fim_descarregamento" required disabled>
+                </div>
+            </div>
+
+            <button type="submit" onclick="enviarFormulario(event)">Enviar Edição</button>
+
+            <!-- Barra de Progresso para Edição -->
+            <div id="barra-progressao-container-edicao" style="display: none;">
+              <progress id="barra-progressao-edicao" value="0" max="100" style="width: 100%;"></progress>
+              <label for="progress">Enviando...</label>
             </div>
           </div>
-
-          <div id="campo_fim" style="display: none;">
-            <div class="input-group">
-              <label for="fim_descarregamento">Fim do Descarregamento:</label>
-              <input type="datetime-local" id="fim_descarregamento" readonly>
-            </div>
-          </div>
-
-          <button type="button" onclick="enviarFormulario(event)">Enviar Edição</button>
         </div>
-      </div>
-
+  
     <script>
+      let botaoDesabilitado = false;  // Variável para verificar se o botão foi clicado
+
       function enviarFormulario(event) {
-        event.preventDefault(); // Evita o envio padrão do formulário
+          event.preventDefault(); // Evita o envio padrão do formulário
 
-        // Validação do formulário
-        if (!validarFormulario()) {
-          alert('Por favor, preencha todos os campos obrigatórios!');
-          return;
-        }
-
-        // Verificação de datas no futuro
-        const horaChegada = document.getElementById('hora_chegada').value;
-        if (horaChegada) {
-          const horaChegadaDate = new Date(horaChegada);
-          const dataAtual = new Date();
-          if (horaChegadaDate > dataAtual) {
-            alert('Erro: A hora de chegada não pode ser no futuro!');
-            return;
+          // Verifica se o botão já foi clicado
+          if (botaoDesabilitado) {
+              return;  // Se já foi clicado, não faz nada
           }
-        }
 
-        // Verificação para o início do descarregamento
-        if (document.getElementById('inicio_descarregamento').value) {
-          const inicioDescarregamento = new Date(document.getElementById('inicio_descarregamento').value);
-          const dataAtual = new Date();
-          if (inicioDescarregamento > dataAtual) {
-            alert('Erro: A data de início do descarregamento não pode ser no futuro!');
-            return;
+          // Desabilita o botão para evitar múltiplos cliques
+          botaoDesabilitado = true;
+          document.querySelector("button[type='submit']").disabled = true;
+
+          // Mostra a barra de progresso com base no tipo de ação (novo ou edição)
+          const acao = document.querySelector('input[name="acao"]:checked').value;
+          let barraProgressoContainer, progressBar;
+          if (acao === 'novo') {
+              barraProgressoContainer = document.getElementById('barra-progressao-container');
+              progressBar = document.getElementById('barra-progressao');
+          } else {
+              barraProgressoContainer = document.getElementById('barra-progressao-container-edicao');
+              progressBar = document.getElementById('barra-progressao-edicao');
           }
-        }
+          
+          barraProgressoContainer.style.display = 'block';
+          progressBar.value = 0; // Começa do zero
 
-        // Verificação para o fim do descarregamento
-        if (document.getElementById('fim_descarregamento').value) {
-          const fimDescarregamento = new Date(document.getElementById('fim_descarregamento').value);
-          const dataAtual = new Date();
-          if (fimDescarregamento > dataAtual) {
-            alert('Erro: A data de fim do descarregamento não pode ser no futuro!');
-            return;
+          // Função para atualizar a barra de progresso a cada 1 segundo
+          function atualizarProgresso() {
+              if (progressBar.value < 100) {
+                  progressBar.value += 10; // Aumenta o valor a cada vez
+              }
           }
-        }
 
-        // Captura os dados do formulário
-        const acao = document.querySelector('input[name="acao"]:checked').value;
-        const formData = {
-          acao: acao,
-          hora_chegada: document.getElementById('hora_chegada').value,
-          placa: document.getElementById('placa').value,  // Valor da Placa
-          pallets: document.getElementById('pallets').value,
-          nfs: document.getElementById('nfs').value,
-          transportadora: document.getElementById('transportadora').value,
-          inicio_descarregamento: acao === 'editar' ? document.getElementById('inicio_descarregamento').value : '',
-          fim_descarregamento: acao === 'editar' ? document.getElementById('fim_descarregamento').value : '',
-          chave_primaria: acao === 'editar' ? document.getElementById('chave_primaria').value : '',
-          campo_editar: document.getElementById('campo_editar').value
-        };
+          // Atualiza o progresso a cada 1 segundo durante o envio
+          let progressoIntervalo = setInterval(atualizarProgresso, 1000);
 
-        // Verifica se a chave primária já existe para novos registros
-        if (acao === 'novo') {
-          google.script.run.withSuccessHandler(function(chaveExistente) {
-            if (chaveExistente) {
-              alert('Erro: A chave primária já existe!');
-            } else {
-              // Caso contrário, envia os dados
+          // Validação do formulário
+          if (!validarFormulario()) {
+              alert('Por favor, preencha todos os campos obrigatórios!');
+              botaoDesabilitado = false;  // Reabilita o botão em caso de erro
+              document.querySelector("button[type='submit']").disabled = false;
+              clearInterval(progressoIntervalo);  // Para o progresso
+              barraProgressoContainer.style.display = 'none';  // Esconde a barra
+              return;
+          }
+
+          // Verificação de data e hora
+          const horaChegada = document.getElementById('hora_chegada').value;
+          if (horaChegada) {
+              const horaChegadaDate = new Date(horaChegada);
+              const dataAtual = new Date();
+              if (horaChegadaDate > dataAtual) {
+                  alert('Erro: A hora de chegada não pode ser no futuro!');
+                  botaoDesabilitado = false;
+                  document.querySelector("button[type='submit']").disabled = false;
+                  clearInterval(progressoIntervalo);
+                  barraProgressoContainer.style.display = 'none';
+                  return;
+              }
+          }
+
+          if (document.getElementById('inicio_descarregamento').value) {
+              const inicioDescarregamento = new Date(document.getElementById('inicio_descarregamento').value);
+              const dataAtual = new Date();
+              if (inicioDescarregamento > dataAtual) {
+                  alert('Erro: A data de início do descarregamento não pode ser no futuro!');
+                  botaoDesabilitado = false;
+                  document.querySelector("button[type='submit']").disabled = false;
+                  clearInterval(progressoIntervalo);
+                  barraProgressoContainer.style.display = 'none';
+                  return;
+              }
+          }
+
+          if (document.getElementById('fim_descarregamento').value) {
+              const fimDescarregamento = new Date(document.getElementById('fim_descarregamento').value);
+              const dataAtual = new Date();
+              if (fimDescarregamento > dataAtual) {
+                  alert('Erro: A data de fim do descarregamento não pode ser no futuro!');
+                  botaoDesabilitado = false;
+                  document.querySelector("button[type='submit']").disabled = false;
+                  clearInterval(progressoIntervalo);
+                  barraProgressoContainer.style.display = 'none';
+                  return;
+              }
+          }
+
+          // Captura os dados do formulário
+          const formData = {
+              acao: acao,
+              hora_chegada: document.getElementById('hora_chegada').value,
+              placa: document.getElementById('placa').value,
+              pallets: document.getElementById('pallets').value,
+              nfs: document.getElementById('nfs').value,
+              transportadora: document.getElementById('transportadora').value,
+              inicio_descarregamento: acao === 'editar' ? document.getElementById('inicio_descarregamento').value : '',
+              fim_descarregamento: acao === 'editar' ? document.getElementById('fim_descarregamento').value : '',
+              chave_primaria: acao === 'editar' ? document.getElementById('chave_primaria').value : '',
+              campo_editar: document.getElementById('campo_editar').value
+          };
+
+          // Verificação para o campo de edição
+          if (acao === 'editar') {
+              const chavePrimaria = formData.chave_primaria;
+              if (!chavePrimaria) {
+                  alert('Erro: A placa não foi fornecida!');
+                  botaoDesabilitado = false;
+                  document.querySelector("button[type='submit']").disabled = false;
+                  clearInterval(progressoIntervalo);
+                  barraProgressoContainer.style.display = 'none';
+                  return;
+              }
+
+              // Verifique se a chave primária existe na planilha
+              google.script.run.withSuccessHandler(function(chaveExistente) {
+                  if (!chaveExistente) {
+                      alert('Erro: O código informado não existe!');
+                      botaoDesabilitado = false;
+                      document.querySelector("button[type='submit']").disabled = false;
+                      clearInterval(progressoIntervalo);
+                      barraProgressoContainer.style.display = 'none';
+                      return;
+                  } else {
+                      // Caso a chave exista, salva os dados
+                      google.script.run.salvarDados(formData);
+                      alert('Dados atualizados com sucesso!');
+                      limparCamposFormulario();
+                      botaoDesabilitado = false;
+                      document.querySelector("button[type='submit']").disabled = false;
+                      clearInterval(progressoIntervalo);
+                      barraProgressoContainer.style.display = 'none';
+                  }
+              }).verificarChavePrimaria(formData.chave_primaria);
+
+          } else if (acao === 'novo') {
+              google.script.run.withSuccessHandler(function(chaveExistente) {
+                  if (chaveExistente) {
+                      alert('Erro: A placa já existe na data fornecida!');
+                      botaoDesabilitado = false;
+                      document.querySelector("button[type='submit']").disabled = false;
+                      clearInterval(progressoIntervalo);
+                      barraProgressoContainer.style.display = 'none';
+                  } else {
+                      google.script.run.salvarDados(formData);
+                      alert('Dados enviados com sucesso!');
+                      limparCamposFormulario();
+                      botaoDesabilitado = false;
+                      document.querySelector("button[type='submit']").disabled = false;
+                      clearInterval(progressoIntervalo);
+                      barraProgressoContainer.style.display = 'none';
+                  }
+              }).verificarChavePrimaria2(formData.placa, formData.hora_chegada);
+          } else {
               google.script.run.salvarDados(formData);
               alert('Dados enviados com sucesso!');
               limparCamposFormulario();
-            }
-          }).verificarChavePrimaria2(formData.placa, formData.hora_chegada);
-        } else if (acao === 'editar') {
-          // Verifica se a chave primária existe para edição
-          const chavePrimaria = formData.chave_primaria;
-          if (!chavePrimaria) {
-            alert('Erro: A chave primária não foi fornecida!');
-            return;
+              botaoDesabilitado = false;
+              document.querySelector("button[type='submit']").disabled = false;
+              clearInterval(progressoIntervalo);
+              barraProgressoContainer.style.display = 'none';
           }
-
-          // Verifique se a chave primária existe na planilha
-          google.script.run.withSuccessHandler(function(chaveExistente) {
-            if (!chaveExistente) {
-              alert('Erro: A chave primária informada não existe!');
-              return;
-            } else {
-              // Caso a chave exista, salva os dados
-              google.script.run.salvarDados(formData);
-              alert('Dados atualizados com sucesso!');
-              limparCamposFormulario();
-            }
-          }).verificarChavePrimaria(formData.chave_primaria);
-        } else {
-          // Caso contrário, envia os dados
-          google.script.run.salvarDados(formData);
-          alert('Dados enviados com sucesso!');
-          limparCamposFormulario();
-        }
       }
-
 
       function validarFormulario() {
         const acao = document.querySelector('input[name="acao"]:checked').value;
@@ -373,28 +513,37 @@
       }
 
       window.onload = function() {
-        // Função para atualizar todos os campos de data e hora a cada segundo
-        setInterval(function() {
-          const agora = new Date();
+          // Exibe a mensagem de "Carregando..." enquanto a data e hora estão sendo atualizadas
+          const mensagemCarregando = document.getElementById('mensagemCarregando');
+          if (mensagemCarregando) {
+              mensagemCarregando.style.display = 'block';  // Exibe a mensagem de carregamento
+          }
 
-          // Obter data e hora no formato ISO, mas ajustado para o fuso horário local
-          const ano = agora.getFullYear();
-          const mes = String(agora.getMonth() + 1).padStart(2, '0');  // Meses começam do 0 (Janeiro é 0)
-          const dia = String(agora.getDate()).padStart(2, '0');
-          const horas = String(agora.getHours()).padStart(2, '0');
-          const minutos = String(agora.getMinutes()).padStart(2, '0');
+          // Função para atualizar todos os campos de data e hora a cada segundo
+          setInterval(function() {
+              const agora = new Date();
 
-          // Formato de data no padrão yyyy-MM-ddTHH:mm
-          const dataFormatada = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
+              // Obter data e hora no formato ISO, mas ajustado para o fuso horário local
+              const ano = agora.getFullYear();
+              const mes = String(agora.getMonth() + 1).padStart(2, '0');  // Meses começam do 0 (Janeiro é 0)
+              const dia = String(agora.getDate()).padStart(2, '0');
+              const horas = String(agora.getHours()).padStart(2, '0');
+              const minutos = String(agora.getMinutes()).padStart(2, '0');
 
-          // Seleciona todos os campos do tipo datetime-local
-          const camposDataHora = document.querySelectorAll('input[type="datetime-local"]');
+              // Formato de data no padrão yyyy-MM-ddTHH:mm
+              const dataFormatada = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
 
-          // Atualiza o valor de cada campo com a hora atual
-          camposDataHora.forEach(function(campo) {
-            campo.value = dataFormatada;
-          });
-        }, 1000);  // Atualiza a cada 1 segundo (1000 milissegundos)
+              // Seleciona todos os campos do tipo datetime-local
+              const camposDataHora = document.querySelectorAll('input[type="datetime-local"]');
+
+              // Atualiza o valor de cada campo com a hora atual
+              camposDataHora.forEach(function(campo) {
+                  campo.value = dataFormatada;
+              });
+          }, 1000);  // Atualiza a cada 1 segundo (1000 milissegundos)
+
+          // Carrega os códigos de rastreio pendentes
+          carregarCodigosRastreioPendentes();
       };
 
 
@@ -429,29 +578,96 @@
           mostrarCamposNovo(); // Retorna para o estado de "Novo Recebimento"
       }
 
+      // Exibe os campos de edição de recebimento
       function mostrarCamposEdicao() {
-        document.getElementById('campos_novo').style.display = 'none';
-        document.getElementById('campos_edicao').style.display = 'block';
-        document.getElementById('chave_primaria').readOnly = false;
+          document.getElementById('campos_novo').style.display = 'none'; // Esconde os campos do novo recebimento
+          document.getElementById('campos_edicao').style.display = 'block'; // Exibe os campos de edição
+          document.getElementById('chave_primaria').readOnly = false; // Torna o campo "Código de Rastreio" editável
+          carregarCodigosRastreioPendentes(); // Carrega os códigos de rastreio pendentes ao exibir os campos de edição
       }
 
+      // Exibe os campos para um novo recebimento
       function mostrarCamposNovo() {
-        document.getElementById('campos_edicao').style.display = 'none';
-        document.getElementById('campos_novo').style.display = 'block';
-        document.getElementById('chave_primaria').readOnly = true;
-        document.getElementById('chave_primaria').value = '';
+          document.getElementById('campos_edicao').style.display = 'none'; // Esconde os campos de edição
+          document.getElementById('campos_novo').style.display = 'block'; // Exibe os campos do novo recebimento
+          document.getElementById('chave_primaria').readOnly = true; // Torna o campo "Código de Rastreio" somente leitura
+          document.getElementById('chave_primaria').value = ''; // Limpa o valor do campo "Código de Rastreio"
       }
 
+      // Exibe o campo a ser editado (início ou fim do descarregamento)
       function mostrarCampoEdicao(campo) {
-        document.getElementById('campo_inicio').style.display = 'none';
-        document.getElementById('campo_fim').style.display = 'none';
+          document.getElementById('campo_inicio').style.display = 'none'; // Esconde o campo de "Início do Descarregamento"
+          document.getElementById('campo_fim').style.display = 'none'; // Esconde o campo de "Fim do Descarregamento"
 
-        if (campo === 'inicio') {
-          document.getElementById('campo_inicio').style.display = 'block';
-        } else if (campo === 'fim') {
-          document.getElementById('campo_fim').style.display = 'block';
-        }
+          // Exibe o campo correspondente ao valor selecionado (início ou fim)
+          if (campo === 'inicio') {
+              document.getElementById('campo_inicio').style.display = 'block';
+          } else if (campo === 'fim') {
+              document.getElementById('campo_fim').style.display = 'block';
+          }
       }
+
+
+      function carregarCodigosRastreioPendentes() {
+          const selectChavePrimaria = document.getElementById('chave_primaria');
+          
+          // Exibe a mensagem de "Carregando..." enquanto os códigos de rastreio estão sendo carregados
+          const mensagemCarregando = document.getElementById('mensagemCarregandoCodigos');
+          if (mensagemCarregando) {
+              mensagemCarregando.style.display = 'block';  // Exibe a mensagem de carregamento
+          }
+
+          // Limpa o conteúdo da lista antes de preencher
+          selectChavePrimaria.innerHTML = '<option value="">Selecione um código de rastreio</option>'; // Adiciona a opção inicial
+
+          // Chama uma função do servidor para buscar os dados
+          google.script.run.withSuccessHandler(function(dados) {
+              // Esconde a mensagem de carregamento
+              if (mensagemCarregando) {
+                  mensagemCarregando.style.display = 'none';  // Esconde a mensagem de carregamento
+              }
+
+              if (dados && Array.isArray(dados)) {
+                  // Preenche o select com os códigos de rastreio com status "Pendente"
+                  dados.forEach(function(item) {
+                      const option = document.createElement('option');
+                      option.value = item.codigo; // 'codigo' é o valor do código de rastreio
+                      option.textContent = item.codigo; // Exibe o código de rastreio no select
+                      selectChavePrimaria.appendChild(option);
+                  });
+              }
+          }).buscarCodigosPendentes(); // Chama o método no Google Apps Script que retorna os dados
+      }
+
+      // Função que é chamada quando um código de rastreio é selecionado
+      function buscarStatusDescarregamento(codigo) {
+          console.log("Código de Rastreio Selecionado: ", codigo);  // Log para verificar o código
+          if (!codigo) {
+              document.getElementById('campo_editar').value = 'Selecionar';
+              return;
+          }
+
+          google.script.run.withSuccessHandler(function(status) {
+              console.log("Status Retornado: ", status);  // Log para verificar o status retornado
+              const campoEditar = document.getElementById('campo_editar');
+
+              if (status) {
+                  if (status === 'Pendente - Inicio') {
+                      campoEditar.value = 'inicio';  // Alterando o valor do select para 'inicio'
+                  } else if (status === 'Pendente - Fim') {
+                      campoEditar.value = 'fim';  // Alterando o valor do select para 'fim'
+                  } else {
+                      campoEditar.value = 'Selecionar';  // Se o status não for reconhecido, reseta para 'Selecionar'
+                  }
+              } else {
+                  campoEditar.value = 'Selecionar';  // Caso o status seja null ou undefined, reseta para 'Selecionar'
+              }
+
+              // Chama a função para mostrar o campo correspondente após a alteração
+              mostrarCampoEdicao(campoEditar.value);  // Exibe o campo de data correto com base no valor
+          }).buscarStatusDescarregamento(codigo);
+      }
+
 
       function buscarChavePrimaria(placa) {
         if (placa) {
