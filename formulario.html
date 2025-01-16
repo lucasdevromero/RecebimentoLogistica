@@ -288,6 +288,11 @@
                 </select>
             </div>
 
+            <!-- Mensagem de Carregamento para Status -->
+            <div id="mensagemdecarregandostatus" style="display:none; color: #fc0303; font-size: 0.85em; font-style: italic; font-weight: bold; margin-top: 5px;">
+              Carregando Status de Descarregamento...
+            </div>
+
             <div id="campo_inicio" style="display: none;">
                 <div class="input-group">
                     <label for="inicio_descarregamento">Início do Descarregamento:</label>
@@ -325,18 +330,17 @@
 
           // Desabilita o botão para evitar múltiplos cliques
           botaoDesabilitado = true;
-          document.querySelector("button[type='submit']").disabled = true;
+          const submitButton = document.querySelector("button[type='submit']");
+          submitButton.disabled = true;
 
           // Mostra a barra de progresso com base no tipo de ação (novo ou edição)
           const acao = document.querySelector('input[name="acao"]:checked').value;
-          let barraProgressoContainer, progressBar;
-          if (acao === 'novo') {
-              barraProgressoContainer = document.getElementById('barra-progressao-container');
-              progressBar = document.getElementById('barra-progressao');
-          } else {
-              barraProgressoContainer = document.getElementById('barra-progressao-container-edicao');
-              progressBar = document.getElementById('barra-progressao-edicao');
-          }
+          const barraProgressoContainer = acao === 'novo' ? 
+              document.getElementById('barra-progressao-container') : 
+              document.getElementById('barra-progressao-container-edicao');
+          const progressBar = acao === 'novo' ? 
+              document.getElementById('barra-progressao') : 
+              document.getElementById('barra-progressao-edicao');
           
           barraProgressoContainer.style.display = 'block';
           progressBar.value = 0; // Começa do zero
@@ -354,56 +358,114 @@
           // Validação do formulário
           if (!validarFormulario()) {
               alert('Por favor, preencha todos os campos obrigatórios!');
-              botaoDesabilitado = false;  // Reabilita o botão em caso de erro
-              document.querySelector("button[type='submit']").disabled = false;
-              clearInterval(progressoIntervalo);  // Para o progresso
-              barraProgressoContainer.style.display = 'none';  // Esconde a barra
+              resetarFormulario(progressoIntervalo, barraProgressoContainer);
               return;
           }
 
           // Verificação de data e hora
-          const horaChegada = document.getElementById('hora_chegada').value;
-          if (horaChegada) {
-              const horaChegadaDate = new Date(horaChegada);
-              const dataAtual = new Date();
-              if (horaChegadaDate > dataAtual) {
-                  alert('Erro: A hora de chegada não pode ser no futuro!');
-                  botaoDesabilitado = false;
-                  document.querySelector("button[type='submit']").disabled = false;
-                  clearInterval(progressoIntervalo);
-                  barraProgressoContainer.style.display = 'none';
-                  return;
-              }
-          }
-
-          if (document.getElementById('inicio_descarregamento').value) {
-              const inicioDescarregamento = new Date(document.getElementById('inicio_descarregamento').value);
-              const dataAtual = new Date();
-              if (inicioDescarregamento > dataAtual) {
-                  alert('Erro: A data de início do descarregamento não pode ser no futuro!');
-                  botaoDesabilitado = false;
-                  document.querySelector("button[type='submit']").disabled = false;
-                  clearInterval(progressoIntervalo);
-                  barraProgressoContainer.style.display = 'none';
-                  return;
-              }
-          }
-
-          if (document.getElementById('fim_descarregamento').value) {
-              const fimDescarregamento = new Date(document.getElementById('fim_descarregamento').value);
-              const dataAtual = new Date();
-              if (fimDescarregamento > dataAtual) {
-                  alert('Erro: A data de fim do descarregamento não pode ser no futuro!');
-                  botaoDesabilitado = false;
-                  document.querySelector("button[type='submit']").disabled = false;
-                  clearInterval(progressoIntervalo);
-                  barraProgressoContainer.style.display = 'none';
-                  return;
-              }
+          if (!validarDatas()) {
+              resetarFormulario(progressoIntervalo, barraProgressoContainer);
+              return;
           }
 
           // Captura os dados do formulário
-          const formData = {
+          const formData = captureFormData(acao);
+
+          // Verificação para o campo de edição
+          if (acao === 'editar' && !formData.chave_primaria) {
+              alert('Erro: A placa não foi fornecida!');
+              resetarFormulario(progressoIntervalo, barraProgressoContainer);
+              return;
+          }
+
+          // Chama a função para salvar os dados (nova ou editar)
+          if (acao === 'editar') {
+              handleEditAction(formData, progressoIntervalo, barraProgressoContainer);
+          } else {
+              handleNewAction(formData, progressoIntervalo, barraProgressoContainer);
+          }
+      }
+
+      function resetarFormulario(progressoIntervalo, barraProgressoContainer) {
+          botaoDesabilitado = false;
+          const submitButton = document.querySelector("button[type='submit']");
+          submitButton.disabled = false;
+          clearInterval(progressoIntervalo);
+          barraProgressoContainer.style.display = 'none';
+
+          // Chama a função de limpar campos que você já tem
+          limparCamposFormulario();
+      }
+
+      function validarFormulario() {
+          const acao = document.querySelector('input[name="acao"]:checked').value;
+          let isValid = true;
+
+          // Função para verificar se campos obrigatórios estão preenchidos
+          function verificarCamposObrigatorios(campos) {
+              return campos.every(fieldId => document.getElementById(fieldId).value);
+          }
+
+          const requiredFields = ['hora_chegada', 'placa', 'pallets', 'nfs', 'transportadora'];
+
+          // Valida para a ação "novo"
+          if (acao === 'novo') {
+              if (!verificarCamposObrigatorios(requiredFields)) {
+                  isValid = false;
+              }
+          }
+
+          // Valida para a ação "editar"
+          if (acao === 'editar') {
+              const chavePrimaria = document.getElementById('chave_primaria').value;
+              const campoEditar = document.getElementById('campo_editar').value;
+
+              if (!chavePrimaria || campoEditar === 'Selecionar') {
+                  isValid = false;
+              }
+
+              if (campoEditar === 'inicio' && !document.getElementById('inicio_descarregamento').value) {
+                  isValid = false;
+              }
+              if (campoEditar === 'fim' && !document.getElementById('fim_descarregamento').value) {
+                  isValid = false;
+              }
+          }
+
+          return isValid;
+      }
+
+      function validarDatas() {
+          const horaChegada = document.getElementById('hora_chegada').value;
+          const inicioDescarregamento = document.getElementById('inicio_descarregamento').value;
+          const fimDescarregamento = document.getElementById('fim_descarregamento').value;
+          const dataAtual = new Date();
+
+          // Função para verificar se a data é no futuro
+          function isDataNoFuturo(data) {
+              return new Date(data) > dataAtual;
+          }
+
+          if (horaChegada && isDataNoFuturo(horaChegada)) {
+              alert('Erro: A hora de chegada não pode ser no futuro!');
+              return false;
+          }
+
+          if (inicioDescarregamento && isDataNoFuturo(inicioDescarregamento)) {
+              alert('Erro: A data de início do descarregamento não pode ser no futuro!');
+              return false;
+          }
+
+          if (fimDescarregamento && isDataNoFuturo(fimDescarregamento)) {
+              alert('Erro: A data de fim do descarregamento não pode ser no futuro!');
+              return false;
+          }
+
+          return true;
+      }
+
+      function captureFormData(acao) {
+          return {
               acao: acao,
               hora_chegada: document.getElementById('hora_chegada').value,
               placa: document.getElementById('placa').value,
@@ -415,106 +477,37 @@
               chave_primaria: acao === 'editar' ? document.getElementById('chave_primaria').value : '',
               campo_editar: document.getElementById('campo_editar').value
           };
-
-          // Verificação para o campo de edição
-          if (acao === 'editar') {
-              const chavePrimaria = formData.chave_primaria;
-              if (!chavePrimaria) {
-                  alert('Erro: A placa não foi fornecida!');
-                  botaoDesabilitado = false;
-                  document.querySelector("button[type='submit']").disabled = false;
-                  clearInterval(progressoIntervalo);
-                  barraProgressoContainer.style.display = 'none';
-                  return;
-              }
-
-              // Verifique se a chave primária existe na planilha
-              google.script.run.withSuccessHandler(function(chaveExistente) {
-                  if (!chaveExistente) {
-                      alert('Erro: O código informado não existe!');
-                      botaoDesabilitado = false;
-                      document.querySelector("button[type='submit']").disabled = false;
-                      clearInterval(progressoIntervalo);
-                      barraProgressoContainer.style.display = 'none';
-                      return;
-                  } else {
-                      // Caso a chave exista, salva os dados
-                      google.script.run.salvarDados(formData);
-                      alert('Dados atualizados com sucesso!');
-                      limparCamposFormulario();
-                      botaoDesabilitado = false;
-                      document.querySelector("button[type='submit']").disabled = false;
-                      clearInterval(progressoIntervalo);
-                      barraProgressoContainer.style.display = 'none';
-                  }
-              }).verificarChavePrimaria(formData.chave_primaria);
-
-          } else if (acao === 'novo') {
-              google.script.run.withSuccessHandler(function(chaveExistente) {
-                  if (chaveExistente) {
-                      alert('Erro: A placa já existe na data fornecida!');
-                      botaoDesabilitado = false;
-                      document.querySelector("button[type='submit']").disabled = false;
-                      clearInterval(progressoIntervalo);
-                      barraProgressoContainer.style.display = 'none';
-                  } else {
-                      google.script.run.salvarDados(formData);
-                      alert('Dados enviados com sucesso!');
-                      limparCamposFormulario();
-                      botaoDesabilitado = false;
-                      document.querySelector("button[type='submit']").disabled = false;
-                      clearInterval(progressoIntervalo);
-                      barraProgressoContainer.style.display = 'none';
-                  }
-              }).verificarChavePrimaria2(formData.placa, formData.hora_chegada);
-          } else {
-              google.script.run.salvarDados(formData);
-              alert('Dados enviados com sucesso!');
-              limparCamposFormulario();
-              botaoDesabilitado = false;
-              document.querySelector("button[type='submit']").disabled = false;
-              clearInterval(progressoIntervalo);
-              barraProgressoContainer.style.display = 'none';
-          }
       }
 
-      function validarFormulario() {
-        const acao = document.querySelector('input[name="acao"]:checked').value;
+      function handleEditAction(formData, progressoIntervalo, barraProgressoContainer) {
+          google.script.run.withSuccessHandler(function(chaveExistente) {
+              if (!chaveExistente) {
+                  alert('Erro: O código informado não existe!');
+                  resetarFormulario(progressoIntervalo, barraProgressoContainer);
+              } else {
+                  google.script.run.salvarDados(formData);
+                  alert('Dados atualizados com sucesso!');
+                  resetarFormulario(progressoIntervalo, barraProgressoContainer);
+              }
+          }).verificarChavePrimaria(formData.chave_primaria);
+      }
 
-        if (acao === 'novo') {
-          const horaChegada = document.getElementById('hora_chegada').value;
-          const placa = document.getElementById('placa').value;
-          const pallets = document.getElementById('pallets').value;
-          const nfs = document.getElementById('nfs').value;
-          const transportadora = document.getElementById('transportadora').value;
-
-          if (!horaChegada || !placa || !pallets || !nfs || !transportadora) {
-            return false; // Retorna false se algum campo obrigatório não for preenchido
-          }
-        }
-
-        if (acao === 'editar') {
-          const chavePrimaria = document.getElementById('chave_primaria').value;
-          const campoEditar = document.getElementById('campo_editar').value;
-
-          if (!chavePrimaria || campoEditar === 'Selecionar') {
-            return false;
-          }
-
-          if (campoEditar === 'inicio' && !document.getElementById('inicio_descarregamento').value) {
-            return false;
-          }
-          if (campoEditar === 'fim' && !document.getElementById('fim_descarregamento').value) {
-            return false;
-          }
-        }
-
-        return true;
+      function handleNewAction(formData, progressoIntervalo, barraProgressoContainer) {
+          google.script.run.withSuccessHandler(function(chaveExistente) {
+              if (chaveExistente) {
+                  alert('Erro: A placa já existe na data fornecida!');
+                  resetarFormulario(progressoIntervalo, barraProgressoContainer);
+              } else {
+                  google.script.run.salvarDados(formData);
+                  alert('Dados enviados com sucesso!');
+                  resetarFormulario(progressoIntervalo, barraProgressoContainer);
+              }
+          }).verificarChavePrimaria2(formData.placa, formData.hora_chegada);
       }
 
       window.onload = function() {
           // Exibe a mensagem de "Carregando..." enquanto a data e hora estão sendo atualizadas
-          const mensagemCarregando = document.getElementById('mensagemCarregando');
+          const mensagemCarregando = getElementByIdSafe('mensagemCarregando');
           if (mensagemCarregando) {
               mensagemCarregando.style.display = 'block';  // Exibe a mensagem de carregamento
           }
@@ -546,6 +539,10 @@
           carregarCodigosRastreioPendentes();
       };
 
+      // Função utilitária para pegar um elemento com segurança
+      function getElementByIdSafe(id) {
+          return document.getElementById(id);
+      }
 
       function limparCamposFormulario() {
           // Seleciona os elementos do formulário
@@ -556,20 +553,20 @@
 
           // Limpa os campos de entrada
           camposFormulario.forEach(campoId => {
-              const campo = document.getElementById(campoId);
+              const campo = getElementByIdSafe(campoId);
               if (campo) {
                   campo.value = '';  // Limpa o valor do campo
               }
           });
 
           // Limpa o campo 'campo_editar' e redefine para "Selecionar"
-          const campoEditar = document.getElementById('campo_editar');
+          const campoEditar = getElementByIdSafe('campo_editar');
           if (campoEditar) {
               campoEditar.value = 'Selecionar';
           }
 
           // Marca o radio button "novo"
-          const novoRecebimentoRadio = document.getElementById('novoRecebimento');
+          const novoRecebimentoRadio = getElementByIdSafe('novoRecebimento');
           if (novoRecebimentoRadio) {
               novoRecebimentoRadio.checked = true;
           }
@@ -580,41 +577,55 @@
 
       // Exibe os campos de edição de recebimento
       function mostrarCamposEdicao() {
-          document.getElementById('campos_novo').style.display = 'none'; // Esconde os campos do novo recebimento
-          document.getElementById('campos_edicao').style.display = 'block'; // Exibe os campos de edição
-          document.getElementById('chave_primaria').readOnly = false; // Torna o campo "Código de Rastreio" editável
+          toggleCampo('campos_novo', false);
+          toggleCampo('campos_edicao', true);
+          const chavePrimaria = getElementByIdSafe('chave_primaria');
+          if (chavePrimaria) {
+              chavePrimaria.readOnly = false; // Torna o campo "Código de Rastreio" editável
+          }
           carregarCodigosRastreioPendentes(); // Carrega os códigos de rastreio pendentes ao exibir os campos de edição
       }
 
       // Exibe os campos para um novo recebimento
       function mostrarCamposNovo() {
-          document.getElementById('campos_edicao').style.display = 'none'; // Esconde os campos de edição
-          document.getElementById('campos_novo').style.display = 'block'; // Exibe os campos do novo recebimento
-          document.getElementById('chave_primaria').readOnly = true; // Torna o campo "Código de Rastreio" somente leitura
-          document.getElementById('chave_primaria').value = ''; // Limpa o valor do campo "Código de Rastreio"
+          toggleCampo('campos_edicao', false);
+          toggleCampo('campos_novo', true);
+          const chavePrimaria = getElementByIdSafe('chave_primaria');
+          if (chavePrimaria) {
+              chavePrimaria.readOnly = true; // Torna o campo "Código de Rastreio" somente leitura
+              chavePrimaria.value = ''; // Limpa o valor do campo "Código de Rastreio"
+          }
       }
 
       // Exibe o campo a ser editado (início ou fim do descarregamento)
       function mostrarCampoEdicao(campo) {
-          document.getElementById('campo_inicio').style.display = 'none'; // Esconde o campo de "Início do Descarregamento"
-          document.getElementById('campo_fim').style.display = 'none'; // Esconde o campo de "Fim do Descarregamento"
+          toggleCampo('campo_inicio', false);
+          toggleCampo('campo_fim', false);
 
           // Exibe o campo correspondente ao valor selecionado (início ou fim)
           if (campo === 'inicio') {
-              document.getElementById('campo_inicio').style.display = 'block';
+              toggleCampo('campo_inicio', true);
           } else if (campo === 'fim') {
-              document.getElementById('campo_fim').style.display = 'block';
+              toggleCampo('campo_fim', true);
           }
       }
 
+      // Função para alternar a visibilidade dos campos
+      function toggleCampo(campoId, exibir) {
+          const campo = getElementByIdSafe(campoId);
+          if (campo) {
+              campo.style.display = exibir ? 'block' : 'none';
+          }
+      }
 
+      // Carrega os códigos de rastreio pendentes
       function carregarCodigosRastreioPendentes() {
           const selectChavePrimaria = document.getElementById('chave_primaria');
-          
-          // Exibe a mensagem de "Carregando..." enquanto os códigos de rastreio estão sendo carregados
           const mensagemCarregando = document.getElementById('mensagemCarregandoCodigos');
+          
+          // Exibe a mensagem de carregamento
           if (mensagemCarregando) {
-              mensagemCarregando.style.display = 'block';  // Exibe a mensagem de carregamento
+              mensagemCarregando.style.display = 'block';
           }
 
           // Limpa o conteúdo da lista antes de preencher
@@ -624,16 +635,24 @@
           google.script.run.withSuccessHandler(function(dados) {
               // Esconde a mensagem de carregamento
               if (mensagemCarregando) {
-                  mensagemCarregando.style.display = 'none';  // Esconde a mensagem de carregamento
+                  mensagemCarregando.style.display = 'none';
               }
 
+              // Se dados forem válidos e forem um array
               if (dados && Array.isArray(dados)) {
-                  // Preenche o select com os códigos de rastreio com status "Pendente"
+                  // Cria um Set para garantir que os códigos não sejam duplicados
+                  const codigosUnicos = new Set();
+
                   dados.forEach(function(item) {
-                      const option = document.createElement('option');
-                      option.value = item.codigo; // 'codigo' é o valor do código de rastreio
-                      option.textContent = item.codigo; // Exibe o código de rastreio no select
-                      selectChavePrimaria.appendChild(option);
+                      if (item.codigo && !codigosUnicos.has(item.codigo)) {
+                          codigosUnicos.add(item.codigo);  // Adiciona o código ao Set (ignora duplicados)
+                          
+                          // Cria a opção no select
+                          const option = document.createElement('option');
+                          option.value = item.codigo;
+                          option.textContent = item.codigo;
+                          selectChavePrimaria.appendChild(option);
+                      }
                   });
               }
           }).buscarCodigosPendentes(); // Chama o método no Google Apps Script que retorna os dados
@@ -641,42 +660,61 @@
 
       // Função que é chamada quando um código de rastreio é selecionado
       function buscarStatusDescarregamento(codigo) {
-          console.log("Código de Rastreio Selecionado: ", codigo);  // Log para verificar o código
+          const campoEditar = document.getElementById('campo_editar');
+          const mensagemCarregando = document.getElementById('mensagemdecarregandostatus');
+          
+          // Se não houver código, resetar o campo e sair da função
           if (!codigo) {
-              document.getElementById('campo_editar').value = 'Selecionar';
+              if (campoEditar) {
+                  campoEditar.value = 'Selecionar';
+              }
               return;
           }
 
-          google.script.run.withSuccessHandler(function(status) {
-              console.log("Status Retornado: ", status);  // Log para verificar o status retornado
-              const campoEditar = document.getElementById('campo_editar');
+          // Exibe a mensagem de carregamento
+          if (mensagemCarregando) {
+              mensagemCarregando.style.display = 'block';
+          }
 
-              if (status) {
-                  if (status === 'Pendente - Inicio') {
-                      campoEditar.value = 'inicio';  // Alterando o valor do select para 'inicio'
-                  } else if (status === 'Pendente - Fim') {
-                      campoEditar.value = 'fim';  // Alterando o valor do select para 'fim'
-                  } else {
-                      campoEditar.value = 'Selecionar';  // Se o status não for reconhecido, reseta para 'Selecionar'
-                  }
-              } else {
-                  campoEditar.value = 'Selecionar';  // Caso o status seja null ou undefined, reseta para 'Selecionar'
+          // Chama a função do Google Apps Script para buscar o status de descarregamento
+          google.script.run.withSuccessHandler(function(status) {
+              // Esconde a mensagem de carregamento
+              if (mensagemCarregando) {
+                  mensagemCarregando.style.display = 'none';
               }
 
-              // Chama a função para mostrar o campo correspondente após a alteração
-              mostrarCampoEdicao(campoEditar.value);  // Exibe o campo de data correto com base no valor
+              // Atualiza o campo de edição com o status recebido
+              if (campoEditar) {
+                  if (status) {
+                      if (status === 'Pendente - Inicio') {
+                          campoEditar.value = 'inicio';  // Alterando o valor do select para 'inicio'
+                      } else if (status === 'Pendente - Fim') {
+                          campoEditar.value = 'fim';  // Alterando o valor do select para 'fim'
+                      } else {
+                          campoEditar.value = 'Selecionar';  // Se o status não for reconhecido, reseta para 'Selecionar'
+                      }
+                  } else {
+                      campoEditar.value = 'Selecionar';  // Caso o status seja null ou undefined, reseta para 'Selecionar'
+                  }
+
+                  // Chama a função para mostrar o campo correspondente após a alteração
+                  mostrarCampoEdicao(campoEditar.value);  // Exibe o campo de data correto com base no valor
+              }
           }).buscarStatusDescarregamento(codigo);
       }
 
-
+      // Função para buscar a chave primária a partir da placa
       function buscarChavePrimaria(placa) {
-        if (placa) {
-          google.script.run.withSuccessHandler(function(chave) {
-            if (chave) {
-              document.getElementById('chave_primaria').value = chave; // Preenche a chave primária
-            }
-          }).buscarChavePrimaria(placa);
-        }
+          if (placa) {
+              google.script.run.withSuccessHandler(function(chave) {
+                  if (chave) {
+                      const chavePrimaria = getElementByIdSafe('chave_primaria');
+                      if (chavePrimaria) {
+                          chavePrimaria.value = chave; // Preenche a chave primária
+                      }
+                  }
+              }).buscarChavePrimaria(placa);
+          }
       }
     </script>
   </body>
