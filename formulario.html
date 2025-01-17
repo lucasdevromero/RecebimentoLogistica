@@ -196,6 +196,10 @@
           background-color: #4caf50;
           border-radius: 10px;
         }
+
+        input[type="datetime-local"] {
+          display: none;
+        }
       </style>
   </head>
   <body>
@@ -216,114 +220,117 @@
 
           <!-- Campos para novo recebimento -->
           <div id="campos_novo">
-            <h3>Dados do Novo Recebimento</h3>
-            <div class="input-group">
-              <label for="hora_chegada">Hora de Chegada na Doca:</label>
-              <input type="datetime-local" id="hora_chegada" required disabled>
-            </div>
-            
-            <form id="form_recebimento" action="/submit" method="POST" onsubmit="enviarFormulario(event)">
-              <div class="input-group">
-                <label for="placa">Placa do Veículo:</label>
-                <input type="text" id="placa" name="placa" placeholder="Ex: Padrão BR ABC1234 ou Mercosul ABC1D23" 
-                      pattern="^[A-Z]{3}\d{4}$|^[A-Z]{3}\d[A-Z]\d{2}$" 
-                      title="Formato de placa inválido. Exemplo: Padrão BR ABC1234 ou Mercosul ABC1D23" 
-                      required />
-              </div>
+              <h3>Dados do Novo Recebimento</h3>
+              <form id="form_recebimento" action="/submit" method="POST" onsubmit="enviarFormulario(event)">
+                  <div class="input-group">
+                      <label for="placa">Placa do Veículo:</label>
+                      <input type="text" id="placa" name="placa" placeholder="Ex: Padrão BR ABC1234 ou Mercosul ABC1D23" 
+                          pattern="^[A-Z]{3}\d{4}$|^[A-Z]{3}\d[A-Z]\d{2}$" 
+                          title="Formato de placa inválido. Exemplo: Padrão BR ABC1234 ou Mercosul ABC1D23" 
+                          required />
+                  </div>
 
-              <div class="input-group">
-                <label for="pallets">Quantidade de Pallets:</label>
-                <input type="number" id="pallets" required>
-              </div>
+                  <div class="input-group">
+                      <label for="tipo_carga">Tipo de Carga:</label>
+                      <select id="tipo_carga" name="tipo_carga" required>
+                          <option value="Selecionar">Selecionar</option>
+                          <option value="Palletizada">Palletizada</option>
+                          <option value="Batida">Batida</option>
+                      </select>
+                  </div>
 
-              <div class="input-group">
-                <label for="nfs">Quantidade de NFs:</label>
-                <input type="number" id="nfs" required>
-              </div>
+                  <div class="input-group">
+                      <label for="transportadora">Transportadora:</label>
+                      <select id="transportadora" name="transportadora" required>
+                          <option value="">Escolha a Transportadora</option>
+                          <!-- A lista de transportadoras será preenchida pelo Google Apps Script -->
+                          <? for (var i = 0; i < transportadoras.length; i++) { ?>
+                              <option value="<?= transportadoras[i] ?>"><?= transportadoras[i] ?></option>
+                          <? } ?>
+                      </select>
+                  </div>
 
-              <div class="input-group">
-                <label for="transportadora">Transportadora:</label>
-                <select id="transportadora" required>
-                  <option value="">Escolha a Transportadora</option>
-                  <!-- As opções serão preenchidas pelo servidor -->
-                  <? for (var i = 0; i < transportadoras.length; i++) { ?>
-                    <option value="<?= transportadoras[i] ?>"><?= transportadoras[i] ?></option>
-                  <? } ?>
-                </select>
-              </div>
-
-              <button type="submit">Enviar</button>
+                  <button type="submit">Enviar</button>
+              </form>
 
               <!-- Barra de Progresso para Novo Recebimento -->
               <div id="barra-progressao-container" style="display: none;">
-                <progress id="barra-progressao" value="0" max="100" style="width: 100%;"></progress>
-                <label for="progress">Enviando...</label>
+                  <progress id="barra-progressao" value="0" max="100" style="width: 100%;"></progress>
+                  <label for="progress">Enviando...</label>
               </div>
-
-            </form>
           </div>
 
-          <!-- Campos para editar recebimento -->
+
+          <!-- Campos para edição -->
           <div id="campos_edicao">
-            <h3>Editar Recebimento</h3>
-            <div class="input-group">
-              <label for="chave_primaria">Código de Rastreio:</label>
-              <select id="chave_primaria" onchange="buscarStatusDescarregamento(this.value)" name="chave_primaria" required>
-                <option value="">Selecione um código de rastreio</option>
-                <!-- As opções serão preenchidas dinamicamente via JavaScript -->
-              </select>
-            </div>
+              <h3>Editar Recebimento</h3>
+              <form id="form_edicao" action="/submit_edicao" method="POST" onsubmit="enviarFormulario(event)">
+                  
+                  <!-- Seleção de código de rastreio -->
+                  <div class="input-group">
+                      <label for="chave_primaria">Código de Rastreio:</label>
+                      <select id="chave_primaria" onchange="buscarStatusDescarregamento(this.value)" name="chave_primaria" required>
+                          <option value="">Selecione um código de rastreio</option>
+                      </select>
+                  </div>
 
-            <!-- Mensagem de Carregamento para Códigos de Rastreamento -->
-            <div id="mensagemCarregandoCodigos" style="display:none; color: #fc0303; font-size: 0.85em; font-style: italic; font-weight: bold  ;margin-top: 5px;">
-              Carregando códigos de rastreio...
-            </div>
+                  <!-- Mensagem de Carregamento para Códigos de Rastreamento -->
+                  <div id="mensagemCarregandoCodigos" style="display:none; color: #fc0303; font-size: 0.85em; font-style: italic; font-weight: bold; margin-top: 5px;">
+                      Carregando códigos de rastreio...
+                  </div>
 
-            <div class="input-group">
-                <label for="campo_editar">Selecione o campo a editar:</label>
-                <select id="campo_editar" onchange="mostrarCampoEdicao(this.value)" required disabled>
-                    <option value="Selecionar">Selecionar</option>
-                    <option value="inicio">Início do Descarregamento</option>
-                    <option value="fim">Fim do Descarregamento</option>
-                </select>
-            </div>
+                  <!-- Seleção de campo a editar -->
+                  <div class="input-group">
+                      <label for="campo_editar">Selecione o campo a editar:</label>
+                      <select id="campo_editar" onchange="mostrarCampoEdicao(this.value)" required disabled>
+                          <option value="Selecionar">Selecionar</option>
+                          <option value="inicio">Início do Descarregamento</option>
+                          <option value="fim">Fim do Descarregamento</option>
+                      </select>
+                  </div>
 
-            <!-- Mensagem de Carregamento para Status -->
-            <div id="mensagemdecarregandostatus" style="display:none; color: #fc0303; font-size: 0.85em; font-style: italic; font-weight: bold; margin-top: 5px;">
-              Carregando Status de Descarregamento...
-            </div>
+                  <!-- Mensagem de Carregamento para Status -->
+                  <div id="mensagemdecarregandostatus" style="display:none; color: #fc0303; font-size: 0.85em; font-style: italic; font-weight: bold; margin-top: 5px;">
+                      Carregando Status de Descarregamento...
+                  </div>
 
-            <div id="campo_inicio" style="display: none;">
-                <div class="input-group">
-                    <label for="inicio_descarregamento">Início do Descarregamento:</label>
-                    <input type="datetime-local" id="inicio_descarregamento" required disabled>
-                </div>
-            </div>
+                  <!-- Campo de Fim -->
+                  <div id="campo_fim" style="display: none;">
+                      <!-- Campos de Pallets e NFs -->
+                      <div id="campo_pallets_nf" style="display: none;">
+                          <div class="input-group">
+                              <label for="pallets">Quantidade de Pallets:</label>
+                              <input type="number" id="pallets" required>
+                          </div>
 
-            <div id="campo_fim" style="display: none;">
-                <div class="input-group">
-                    <label for="fim_descarregamento">Fim do Descarregamento:</label>
-                    <input type="datetime-local" id="fim_descarregamento" required disabled>
-                </div>
-            </div>
+                          <div class="input-group">
+                              <label for="nfs">Quantidade de NFs:</label>
+                              <input type="number" id="nfs" required>
+                          </div>
+                      </div>
+                  </div>
 
-            <button type="submit" onclick="enviarFormulario(event)">Enviar Edição</button>
+                  <!-- Botão de Enviar -->
+                  <button type="submit">Enviar Edição</button>
 
-            <!-- Barra de Progresso para Edição -->
-            <div id="barra-progressao-container-edicao" style="display: none;">
-              <progress id="barra-progressao-edicao" value="0" max="100" style="width: 100%;"></progress>
-              <label for="progress">Enviando...</label>
-            </div>
+                  <!-- Barra de Progresso para Edição -->
+                  <div id="barra-progressao-container-edicao" style="display: none;">
+                      <progress id="barra-progressao-edicao" value="0" max="100" style="width: 100%;"></progress>
+                      <label for="progress">Enviando...</label>
+                  </div>
+
+              </form>
           </div>
-        </div>
+
+
   
     <script>
-      let botaoDesabilitado = false;  // Variável para verificar se o botão foi clicado
+      let botaoDesabilitado = false; // Certifique-se de que essa variável está declarada
+      let progressoIntervalo; // Declarando a variável global para o intervalo
 
       function enviarFormulario(event) {
           event.preventDefault(); // Evita o envio padrão do formulário
 
-          // Verifica se o botão já foi clicado
           if (botaoDesabilitado) {
               return;  // Se já foi clicado, não faz nada
           }
@@ -333,38 +340,38 @@
           const submitButton = document.querySelector("button[type='submit']");
           submitButton.disabled = true;
 
-          // Mostra a barra de progresso com base no tipo de ação (novo ou edição)
+          // Mostra a barra de progresso
           const acao = document.querySelector('input[name="acao"]:checked').value;
-          const barraProgressoContainer = acao === 'novo' ? 
-              document.getElementById('barra-progressao-container') : 
+          const barraProgressoContainer = acao === 'novo' ?
+              document.getElementById('barra-progressao-container') :
               document.getElementById('barra-progressao-container-edicao');
-          const progressBar = acao === 'novo' ? 
-              document.getElementById('barra-progressao') : 
+          const progressBar = acao === 'novo' ?
+              document.getElementById('barra-progressao') :
               document.getElementById('barra-progressao-edicao');
-          
+
           barraProgressoContainer.style.display = 'block';
           progressBar.value = 0; // Começa do zero
 
-          // Função para atualizar a barra de progresso a cada 1 segundo
+          // Função para atualizar a barra de progresso
           function atualizarProgresso() {
               if (progressBar.value < 100) {
                   progressBar.value += 10; // Aumenta o valor a cada vez
+              } else {
+                  clearInterval(progressoIntervalo); // Para o intervalo
               }
           }
 
-          // Atualiza o progresso a cada 1 segundo durante o envio
-          let progressoIntervalo = setInterval(atualizarProgresso, 1000);
+          // Atualiza o progresso a cada 1 segundo
+          progressoIntervalo = setInterval(atualizarProgresso, 1000);
 
           // Validação do formulário
+          console.log('Iniciando a validação do formulário...');
           if (!validarFormulario()) {
               alert('Por favor, preencha todos os campos obrigatórios!');
               resetarFormulario(progressoIntervalo, barraProgressoContainer);
-              return;
-          }
-
-          // Verificação de data e hora
-          if (!validarDatas()) {
-              resetarFormulario(progressoIntervalo, barraProgressoContainer);
+              clearInterval(progressoIntervalo); // Para o intervalo em caso de erro
+              botaoDesabilitado = false; // Reabilita o botão para tentativas subsequentes
+              submitButton.disabled = false; // Reabilita o botão para tentativas subsequentes
               return;
           }
 
@@ -375,10 +382,13 @@
           if (acao === 'editar' && !formData.chave_primaria) {
               alert('Erro: A placa não foi fornecida!');
               resetarFormulario(progressoIntervalo, barraProgressoContainer);
+              clearInterval(progressoIntervalo); // Para o intervalo em caso de erro
+              botaoDesabilitado = false; // Reabilita o botão para tentativas subsequentes
+              submitButton.disabled = false; // Reabilita o botão para tentativas subsequentes
               return;
           }
 
-          // Chama a função para salvar os dados (nova ou editar)
+          // Simula o envio do formulário
           if (acao === 'editar') {
               handleEditAction(formData, progressoIntervalo, barraProgressoContainer);
           } else {
@@ -386,97 +396,148 @@
           }
       }
 
+
       function resetarFormulario(progressoIntervalo, barraProgressoContainer) {
           botaoDesabilitado = false;
           const submitButton = document.querySelector("button[type='submit']");
           submitButton.disabled = false;
           clearInterval(progressoIntervalo);
           barraProgressoContainer.style.display = 'none';
+      }
 
-          // Chama a função de limpar campos que você já tem
-          limparCamposFormulario();
+      function exibirErro(fieldId, mensagem) {
+          const campo = document.getElementById(fieldId);
+          if (campo) {
+              const errorElement = document.createElement('span');
+              errorElement.style.color = 'red';
+              errorElement.textContent = mensagem;
+              campo.parentElement.appendChild(errorElement); // Adiciona a mensagem de erro ao campo
+          }
       }
 
       function validarFormulario() {
-          const acao = document.querySelector('input[name="acao"]:checked').value;
-          let isValid = true;
+          const acao = document.querySelector('input[name="acao"]:checked')?.value; // Pega o valor da ação (novo ou editar)
+          let isValid = true; // Variável para controlar a validade do formulário
 
-          // Função para verificar se campos obrigatórios estão preenchidos
+          // Função para verificar se os campos obrigatórios estão preenchidos
           function verificarCamposObrigatorios(campos) {
-              return campos.every(fieldId => document.getElementById(fieldId).value);
+              return campos.every(fieldId => {
+                  const campo = document.getElementById(fieldId);
+                  if (!campo || campo.value.trim() === '') {
+                      exibirErro(fieldId, `O campo ${campo ? campo.name : fieldId} é obrigatório.`);
+                      console.log(`Campo inválido: ${fieldId}`);  // Log para depuração
+                      isValid = false; // Marca o formulário como inválido
+                      return false;
+                  }
+                  return true;
+              });
           }
 
-          const requiredFields = ['hora_chegada', 'placa', 'pallets', 'nfs', 'transportadora'];
+          // Campos obrigatórios para a ação "novo"
+          const requiredFieldsNovo = [ 'placa', 'tipo_carga', 'transportadora']; // Campos para "novo"
 
-          // Valida para a ação "novo"
-          if (acao === 'novo') {
-              if (!verificarCamposObrigatorios(requiredFields)) {
-                  isValid = false;
-              }
-          }
+          // Campos obrigatórios para a ação "editar", inicialmente sem pallets e nfsform
+          let requiredFieldsEdicao = []; // Campos para "editar"
 
-          // Valida para a ação "editar"
+          // Se a ação for "editar", você pode aplicar condições para não validar "placa" e "transportadora"
           if (acao === 'editar') {
-              const chavePrimaria = document.getElementById('chave_primaria').value;
-              const campoEditar = document.getElementById('campo_editar').value;
+              const campoEditar = document.getElementById('campo_editar')?.value;
+              
+              // Condicional para não validar placa e transportadora dependendo da lógica
+              if (campoEditar === 'fim') {
+                  requiredFieldsEdicao.push('pallets', 'nfs');
+              } else {
+                  // Se não for "fim", o campo "placa" e "transportadora" podem ser opcionais.
+                  requiredFieldsEdicao = []; // Aqui você pode fazer com que esses campos não sejam obrigatórios.
+              }
+          }
 
+          // Validação para a ação "novo"
+          if (acao === 'novo') {
+              if (!verificarCamposObrigatorios(requiredFieldsNovo)) {
+                  console.log('Campos obrigatórios para "novo" não preenchidos.');
+              }
+          }
+
+          // Validação para a ação "editar"
+          if (acao === 'editar') {
+              const campoEditar = document.getElementById('campo_editar')?.value;
+              
+              // Verifica se o campo de edição foi selecionado corretamente
+              if (campoEditar === 'Selecionar') {
+                  exibirErro('campo_editar', 'Você deve selecionar um campo a editar!');
+                  console.log('Campo de edição não selecionado.');
+                  isValid = false;
+              }
+
+              // Valida os campos obrigatórios para edição
+              if (!verificarCamposObrigatorios(requiredFieldsEdicao)) {
+                  console.log('Campos obrigatórios para "editar" não preenchidos.');
+                  isValid = false;
+              }
+
+              // Verifica se a chave primária foi preenchida
+              const chavePrimaria = document.getElementById('chave_primaria')?.value;
+              
+              // Ajuste na validação da chave primária
               if (!chavePrimaria || campoEditar === 'Selecionar') {
-                  isValid = false;
-              }
-
-              if (campoEditar === 'inicio' && !document.getElementById('inicio_descarregamento').value) {
-                  isValid = false;
-              }
-              if (campoEditar === 'fim' && !document.getElementById('fim_descarregamento').value) {
+                  exibirErro('chave_primaria', 'A chave primária é obrigatória!');
+                  console.log('Chave primária não preenchida ou campo de edição inválido.');
                   isValid = false;
               }
           }
 
+          console.log(`Formulário válido: ${isValid}`); // Log do status final da validação
           return isValid;
       }
 
-      function validarDatas() {
-          const horaChegada = document.getElementById('hora_chegada').value;
-          const inicioDescarregamento = document.getElementById('inicio_descarregamento').value;
-          const fimDescarregamento = document.getElementById('fim_descarregamento').value;
-          const dataAtual = new Date();
 
-          // Função para verificar se a data é no futuro
-          function isDataNoFuturo(data) {
-              return new Date(data) > dataAtual;
+
+      function exibirErro(fieldId, message) {
+          const campo = document.getElementById(fieldId);
+          if (campo) {
+              campo.style.borderColor = 'red'; // Alerta visual de erro
+              const erroMessage = document.createElement('div');
+              erroMessage.classList.add('erro-message');
+              erroMessage.textContent = message;
+              campo.parentNode.appendChild(erroMessage); // Exibe a mensagem de erro
           }
-
-          if (horaChegada && isDataNoFuturo(horaChegada)) {
-              alert('Erro: A hora de chegada não pode ser no futuro!');
-              return false;
-          }
-
-          if (inicioDescarregamento && isDataNoFuturo(inicioDescarregamento)) {
-              alert('Erro: A data de início do descarregamento não pode ser no futuro!');
-              return false;
-          }
-
-          if (fimDescarregamento && isDataNoFuturo(fimDescarregamento)) {
-              alert('Erro: A data de fim do descarregamento não pode ser no futuro!');
-              return false;
-          }
-
-          return true;
       }
 
+
       function captureFormData(acao) {
-          return {
+          const formData = {
               acao: acao,
-              hora_chegada: document.getElementById('hora_chegada').value,
               placa: document.getElementById('placa').value,
-              pallets: document.getElementById('pallets').value,
-              nfs: document.getElementById('nfs').value,
+              tipocarga: document.getElementById('tipo_carga').value,
               transportadora: document.getElementById('transportadora').value,
-              inicio_descarregamento: acao === 'editar' ? document.getElementById('inicio_descarregamento').value : '',
-              fim_descarregamento: acao === 'editar' ? document.getElementById('fim_descarregamento').value : '',
               chave_primaria: acao === 'editar' ? document.getElementById('chave_primaria').value : '',
-              campo_editar: document.getElementById('campo_editar').value
+              campo_editar: document.getElementById('campo_editar').value,
           };
+
+          // Adiciona hora de chegada no formato ISO: YYYY-MM-DDTHH:mm:ss
+          const dataHoraEnvio = new Date();
+          const horaEnvioFormatada = dataHoraEnvio.toISOString(); // Isso vai gerar o formato correto para o JavaScript
+
+          // Adiciona a hora de chegada no formData (hora_chegada)
+          formData.hora_chegada = horaEnvioFormatada;
+
+          // Se for edição, define a hora de envio no campo correto (início ou fim)
+          if (acao === 'editar') {
+              if (formData.campo_editar === 'inicio') {
+                  formData.inicio_descarregamento = horaEnvioFormatada; // Registra no campo inicio_descarregamento
+                  formData.fim_descarregamento = ''; // Garante que fim esteja vazio
+              } else if (formData.campo_editar === 'fim') {
+                  formData.fim_descarregamento = horaEnvioFormatada; // Registra no campo fim_descarregamento
+                  formData.inicio_descarregamento = ''; // Garante que inicio esteja vazio
+              }
+
+              // Apenas para edição, capturando os dados de Pallets e NFs
+              formData.pallets = document.getElementById('pallets').value;
+              formData.nfs = document.getElementById('nfs').value;
+          }
+
+          return formData;
       }
 
       function handleEditAction(formData, progressoIntervalo, barraProgressoContainer) {
@@ -486,8 +547,13 @@
                   resetarFormulario(progressoIntervalo, barraProgressoContainer);
               } else {
                   google.script.run.salvarDados(formData);
+                  // Alerta de sucesso após salvar os dados
                   alert('Dados atualizados com sucesso!');
-                  resetarFormulario(progressoIntervalo, barraProgressoContainer);
+                  // Limpar o formulário após o alerta de sucesso
+                  setTimeout(function() {
+                      resetarFormulario(progressoIntervalo, barraProgressoContainer);
+                      limparCamposFormulario(); // Limpa os campos após o alerta
+                  }); // Dá 1 segundo para o alerta ser visto
               }
           }).verificarChavePrimaria(formData.chave_primaria);
       }
@@ -499,10 +565,15 @@
                   resetarFormulario(progressoIntervalo, barraProgressoContainer);
               } else {
                   google.script.run.salvarDados(formData);
+                  // Alerta de sucesso após salvar os dados
                   alert('Dados enviados com sucesso!');
-                  resetarFormulario(progressoIntervalo, barraProgressoContainer);
+                  // Limpar o formulário após o alerta de sucesso
+                  setTimeout(function() {
+                      resetarFormulario(progressoIntervalo, barraProgressoContainer);
+                      limparCamposFormulario(); // Limpa os campos após o alerta
+                  }); // Dá 1 segundo para o alerta ser visto
               }
-          }).verificarChavePrimaria2(formData.placa, formData.hora_chegada);
+          }).verificarChavePrimaria2(formData.placa, formData.hora_Envio);
       }
 
       window.onload = function() {
@@ -544,45 +615,68 @@
           return document.getElementById(id);
       }
 
+
       function limparCamposFormulario() {
           // Seleciona os elementos do formulário
           const camposFormulario = [
-              'hora_chegada', 'placa', 'pallets', 'nfs', 'transportadora',
-              'chave_primaria', 'campo_editar', 'inicio_descarregamento', 'fim_descarregamento'
+              'hora_Envio', 'placa', 'tipo_carga', 'transportadora',
+              'chave_primaria', 'campo_editar', 'inicio_descarregamento', 'fim_descarregamento', 'pallets', 'nfs'
           ];
 
           // Limpa os campos de entrada
           camposFormulario.forEach(campoId => {
-              const campo = getElementByIdSafe(campoId);
+              const campo = document.getElementById(campoId);  // Substituindo getElementByIdSafe por getElementById
               if (campo) {
-                  campo.value = '';  // Limpa o valor do campo
+                  if (campo.id === 'tipo_carga') {
+                      campo.value = 'Selecionar';  // Define o valor de 'tipo_carga' como "Selecionar"
+                  } else {
+                      campo.value = '';  // Limpa o valor dos outros campos
+                  }
+              } else {
+                  console.log(`Campo não encontrado: ${campoId}`); // Depuração caso o campo não seja encontrado
               }
           });
 
-          // Limpa o campo 'campo_editar' e redefine para "Selecionar"
-          const campoEditar = getElementByIdSafe('campo_editar');
+          // Limpar campos de Pallets e NFs após o envio
+          const palletsCampo = document.getElementById('pallets');
+          if (palletsCampo) {
+              palletsCampo.value = ''; // Limpa o campo de Pallets
+          }
+
+          const nfsCampo = document.getElementById('nfs');
+          if (nfsCampo) {
+              nfsCampo.value = ''; // Limpa o campo de NFs
+          }
+
+          // Resetar o campo 'campo_editar' para o valor 'Selecionar'
+          const campoEditar = document.getElementById('campo_editar');
           if (campoEditar) {
-              campoEditar.value = 'Selecionar';
+              campoEditar.value = 'Selecionar'; 
+              const evento = new Event('change');
+              campoEditar.dispatchEvent(evento);
           }
 
           // Marca o radio button "novo"
-          const novoRecebimentoRadio = getElementByIdSafe('novoRecebimento');
+          const novoRecebimentoRadio = document.getElementById('novoRecebimento');
           if (novoRecebimentoRadio) {
-              novoRecebimentoRadio.checked = true;
+              novoRecebimentoRadio.checked = true;  // Marca o botão de "Novo Recebimento"
           }
 
           // Resetando a interface de edição
           mostrarCamposNovo(); // Retorna para o estado de "Novo Recebimento"
       }
 
+
       // Exibe os campos de edição de recebimento
       function mostrarCamposEdicao() {
           toggleCampo('campos_novo', false);
           toggleCampo('campos_edicao', true);
+          
           const chavePrimaria = getElementByIdSafe('chave_primaria');
           if (chavePrimaria) {
               chavePrimaria.readOnly = false; // Torna o campo "Código de Rastreio" editável
           }
+          
           carregarCodigosRastreioPendentes(); // Carrega os códigos de rastreio pendentes ao exibir os campos de edição
       }
 
@@ -590,26 +684,40 @@
       function mostrarCamposNovo() {
           toggleCampo('campos_edicao', false);
           toggleCampo('campos_novo', true);
+          toggleCampo('campo_nfs', false);  // Esconde o campo de NFs
+          
           const chavePrimaria = getElementByIdSafe('chave_primaria');
           if (chavePrimaria) {
-              chavePrimaria.readOnly = true; // Torna o campo "Código de Rastreio" somente leitura
-              chavePrimaria.value = ''; // Limpa o valor do campo "Código de Rastreio"
+              chavePrimaria.readOnly = true;  // Torna o campo "Código de Rastreio" somente leitura
+              chavePrimaria.value = '';  // Limpa o valor do campo "Código de Rastreio"
           }
       }
 
-      // Exibe o campo a ser editado (início ou fim do descarregamento)
-      function mostrarCampoEdicao(campo) {
-          toggleCampo('campo_inicio', false);
-          toggleCampo('campo_fim', false);
+      function mostrarCampoEdicao(campoSelecionado) {
+          const campoFim = document.getElementById('campo_fim');
+          const campoPalletsNF = document.getElementById('campo_pallets_nf');
+          const campoPallets = document.getElementById('pallets');
+          const campoNfs = document.getElementById('nfs');
 
-          // Exibe o campo correspondente ao valor selecionado (início ou fim)
-          if (campo === 'inicio') {
-              toggleCampo('campo_inicio', true);
-          } else if (campo === 'fim') {
-              toggleCampo('campo_fim', true);
+          // Mostrar ou esconder o campo de Pallets e NFs com base na seleção
+          if (campoSelecionado === 'fim') {
+              campoFim.style.display = 'block'; // Exibir o contêiner de 'fim'
+              campoPalletsNF.style.display = 'block'; // Mostrar o campo de Pallets e NFs
+              campoPallets.disabled = false;  // Habilitar o campo de Pallets
+              campoNfs.disabled = false;      // Habilitar o campo de NFs
+              campoPallets.required = true;   // Tornar Pallets obrigatório
+              campoNfs.required = true;       // Tornar NFs obrigatório
+          } else if (campoSelecionado === 'inicio') {
+              campoFim.style.display = 'none'; // Esconder o contêiner de 'fim'
+              campoPalletsNF.style.display = 'none'; // Esconder o campo de Pallets e NFs
+              campoPallets.disabled = true;  // Desabilitar o campo de Pallets
+              campoNfs.disabled = true;      // Desabilitar o campo de NFs
+              campoPallets.required = false;   // Remover obrigatoriedade de Pallets
+              campoNfs.required = false;       // Remover obrigatoriedade de NFs
           }
       }
 
+        
       // Função para alternar a visibilidade dos campos
       function toggleCampo(campoId, exibir) {
           const campo = getElementByIdSafe(campoId);
@@ -641,18 +749,14 @@
               // Se dados forem válidos e forem um array
               if (dados && Array.isArray(dados)) {
                   // Cria um Set para garantir que os códigos não sejam duplicados
-                  const codigosUnicos = new Set();
+                  const codigosUnicos = new Set(dados);  // Agora diretamente passando o array
 
-                  dados.forEach(function(item) {
-                      if (item.codigo && !codigosUnicos.has(item.codigo)) {
-                          codigosUnicos.add(item.codigo);  // Adiciona o código ao Set (ignora duplicados)
-                          
-                          // Cria a opção no select
-                          const option = document.createElement('option');
-                          option.value = item.codigo;
-                          option.textContent = item.codigo;
-                          selectChavePrimaria.appendChild(option);
-                      }
+                  // Cria as opções no select
+                  codigosUnicos.forEach(function(codigo) {
+                      const option = document.createElement('option');
+                      option.value = codigo;
+                      option.textContent = codigo;
+                      selectChavePrimaria.appendChild(option);
                   });
               }
           }).buscarCodigosPendentes(); // Chama o método no Google Apps Script que retorna os dados
@@ -716,6 +820,28 @@
               }).buscarChavePrimaria(placa);
           }
       }
+
+      function preencherDataHoraAutomaticamente(event) {
+        const agora = new Date();
+        const dataHoraLocal = agora.toISOString().slice(0, 16); // Formato YYYY-MM-DDTHH:MM
+
+        // Para campos de novo recebimento
+        const campoNovoRecebimento = document.getElementById('hora_Envio');
+        if (campoNovoRecebimento) {
+          campoNovoRecebimento.value = dataHoraLocal;
+        }
+
+        // Para campos de edição
+        const inicioDescarregamento = document.getElementById('inicio_descarregamento');
+        const fimDescarregamento = document.getElementById('fim_descarregamento');
+        if (inicioDescarregamento) {
+          inicioDescarregamento.value = dataHoraLocal;
+        }
+        if (fimDescarregamento) {
+          fimDescarregamento.value = dataHoraLocal;
+        }
+      }
+
     </script>
   </body>
 </html>
