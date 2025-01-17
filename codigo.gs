@@ -1,7 +1,7 @@
 function doGet() {
   const transportadoras = getTransportadoras();
-  const template = HtmlService.createTemplateFromFile('formulario');
-  template.transportadoras = transportadoras;
+  let template = HtmlService.createTemplateFromFile('formulario');
+  template.transportadoras = transportadoras;  // Certifique-se que transportadoras é um array válido
   return template.evaluate();
 }
 
@@ -25,33 +25,53 @@ function getTransportadoras() {
 function salvarDados(formData) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recebimentos');
     try {
+        // Caso de ação "novo"
         if (formData.acao === 'novo') {
-            const chavePrimaria = formData.placa + '.' + Utilities.formatDate(new Date(formData.hora_chegada), Session.getScriptTimeZone(), 'dd/MM/yyyy');
+            // Hora de chegada já está em formato ISO
+            const horaChegada = new Date(formData.hora_chegada);
+            
+            // Verifique se a data está válida
+            if (isNaN(horaChegada)) {
+                return 'Erro: Hora de chegada inválida!'; // Retorna erro se a data não for válida
+            }
+
+            const chavePrimaria = formData.placa + '.' + Utilities.formatDate(horaChegada, Session.getScriptTimeZone(), 'dd/MM/yyyy');
             const chaveExistente = verificarChavePrimaria(chavePrimaria);
             if (chaveExistente) {
                 return 'Erro: A chave primária já existe!'; // Retorna mensagem de erro
             }
-            const novaLinha = [chavePrimaria, formData.hora_chegada, formData.placa, formData.pallets, formData.nfs, formData.transportadora, '', ''];
+
+            const novaLinha = [chavePrimaria, formData.hora_chegada, formData.placa, formData.tipocarga, '', '', formData.transportadora, '', ''];
             sheet.appendRow(novaLinha); // Adiciona uma nova linha com os dados
             return chavePrimaria; // Retorna a chave primária gerada
         }
 
+        // Caso de ação "editar"
         if (formData.acao === 'editar') {
             const chave = formData.chave_primaria;
             const linha = encontrarLinha(sheet, chave);
             if (linha !== -1) {
+                // Verifica se o campo de edição é 'inicio' ou 'fim'
                 if (formData.campo_editar === 'inicio' && formData.inicio_descarregamento) {
-                    sheet.getRange(linha, 7).setValue(formData.inicio_descarregamento); // Atualiza "Início do Descarregamento"
+                    sheet.getRange(linha, 8).setValue(formData.inicio_descarregamento); // Atualiza "Início do Descarregamento"
                 } else if (formData.campo_editar === 'fim' && formData.fim_descarregamento) {
-                    sheet.getRange(linha, 8).setValue(formData.fim_descarregamento); // Atualiza "Fim do Descarregamento"
+                    sheet.getRange(linha, 9).setValue(formData.fim_descarregamento); // Atualiza "Fim do Descarregamento"
+
+                    // Inserir os dados de Pallets e NFs apenas se o campo de edição for "fim"
+                    if (formData.pallets) {
+                        sheet.getRange(linha, 5).setValue(formData.pallets); // Atualiza "Pallets" na coluna 5
+                    }
+                    if (formData.nfs) {
+                        sheet.getRange(linha, 6).setValue(formData.nfs); // Atualiza "NFs" na coluna 6
+                    }
                 }
             } else {
                 return 'Erro: Chave primária não encontrada!'; // Caso a chave não seja encontrada
             }
         }
     } catch (error) {
-        Logger.log(error);
-        return `Erro ao salvar dados: ${error.message}, no campo ${formData.campo_editar}`; // Mensagem de erro detalhada
+        Logger.log(error); // Apenas loga o erro no console
+        return 'Erro ao salvar dados!'; // Mensagem de erro genérica
     }
 }
 
@@ -62,7 +82,6 @@ function verificarChavePrimaria(chavePrimaria) {
     const chavesExistentes = new Set(data); // Usando Set para verificar rapidamente a existência da chave
     return chavesExistentes.has(chavePrimaria); // Retorna true se a chave já existir
 }
-
 
 // Função para encontrar a linha com a chave primária
 function encontrarLinha(sheet, chave) {
@@ -90,7 +109,6 @@ function buscarChavePrimaria(placa) {
   return '';  // Retorna vazio se não encontrar a placa
 }
 
-
 // Função otimizada para verificar a chave primária com placa e hora de chegada
 function verificarChavePrimaria2(placa, horaChegada) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recebimentos');
@@ -100,25 +118,25 @@ function verificarChavePrimaria2(placa, horaChegada) {
     return chavesExistentes.has(chavePrimaria); // Retorna true se a chave primária já existir
 }
 
+// Função para buscar códigos pendentes
 function buscarCodigosPendentes() {
     var planilha = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Recebimentos"); // Acessa a planilha
-    var dados = planilha.getRange(2, 1, planilha.getLastRow() - 1, 12).getValues(); // Obtém as linhas de dados da planilha (ignorando o cabeçalho)
-    var codigosPendentes = [];
-    var codigosProcessados = {}; // Objeto para armazenar códigos já processados
+    var dados = planilha.getRange(2, 1, planilha.getLastRow() - 1, 13).getValues(); // Obtém as linhas de dados da planilha (ignorando o cabeçalho)
+    var codigosPendentes = new Set(); // Usando um Set para garantir unicidade
 
     // Loop para percorrer as linhas e verificar o status
     for (var i = 0; i < dados.length; i++) {
         var codigo = dados[i][0]; // Coluna A (Código de Rastreio)
-        var status = dados[i][11]; // Coluna L (Status)
+        var status = dados[i][12]; // Coluna M (Status), índice 12 (considerando que o índice começa em 0)
 
-        // Verifica se o status é "Pendente - Inicio" ou "Pendente - Fim" e se o código ainda não foi adicionado
-        if ((status === "Pendente - Inicio" || status === "Pendente - Fim") && !codigosProcessados[codigo]) {
-            codigosPendentes.push({codigo: codigo});
-            codigosProcessados[codigo] = true; // Marca o código como processado
+        // Verifica se o status é "Pendente - Inicio" ou "Pendente - Fim"
+        if (status === "Pendente - Inicio" || status === "Pendente - Fim") {
+            codigosPendentes.add(codigo); // Adiciona o código ao Set
         }
     }
 
-    return codigosPendentes; // Retorna os códigos de rastreio com status "Pendente - Inicio" ou "Pendente - Fim" e sem duplicatas
+    // Converte o Set para um array e retorna
+    return Array.from(codigosPendentes); // Retorna apenas os códigos únicos
 }
 
 // Função para buscar o status do descarregamento baseado no código de rastreio
@@ -129,7 +147,7 @@ function buscarStatusDescarregamento(codigo) {
     
     for (let i = 0; i < dados.length; i++) {
         if (dados[i][0] === codigo) {  // Supondo que a coluna 0 (A) contém os códigos de rastreio
-            return dados[i][11];  // Supondo que a coluna L (12ª coluna) contém o status "Pendente - Início" ou "Pendente - Fim"
+            return dados[i][12];  // Supondo que a coluna M (13ª coluna) contém o status "Pendente - Início" ou "Pendente - Fim"
         }
     }
     
